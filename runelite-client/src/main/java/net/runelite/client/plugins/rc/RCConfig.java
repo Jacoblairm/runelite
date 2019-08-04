@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Adam <Adam@sigterm.info>
+ * Copyright (c) 2018, Adam <Adam@sigterm.info>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,11 +22,58 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.grounditems;
+package net.runelite.client.plugins.rc;
 
-enum LootType
+import net.runelite.client.config.Config;
+import net.runelite.client.config.ConfigGroup;
+import net.runelite.client.config.ConfigItem;
+
+@ConfigGroup("rc")
+public interface RCConfig extends Config
 {
-	UNKNOWN,
-	PVP,
-	PVM;
+
+	@ConfigItem(
+		position = 1,
+		keyName = "swapFillPouch",
+		name = "Pouches",
+		description = "Swap Talk-to with Bank on Bank NPC<br>Example: Banker"
+	)
+	default boolean swapPouches()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		position = 2,
+		keyName = "swapTeleports",
+		name = "Swap teleports",
+		description = "Swap Interact with Empty for birdhouses on Fossil Island"
+	)
+	default boolean swapTeleports()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+			position = 2,
+			keyName = "swapTrade",
+			name = "Swap trade",
+			description = "Swap Interact with Empty for birdhouses on Fossil Island"
+	)
+	default boolean swapTrade()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+			position = 2,
+			keyName = "disableCraftAltar",
+			name = "Disable click on altar",
+			description = "Swap Interact with Empty for birdhouses on Fossil Island"
+	)
+	default boolean disableCraftAltar()
+	{
+		return false;
+	}
+
 }
