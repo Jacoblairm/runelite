@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Devin French <https://github.com/devinfrench>
+ * Copyright (c) 2018, Lotto <https://github.com/devLotto>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,46 +22,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.api;
+package net.runelite.client.plugins.cluescrolls.clues.item;
 
-import java.util.function.Predicate;
+import net.runelite.api.Client;
+import net.runelite.api.Item;
 
-/**
- * A query to search the game for objects that match.
- *
- * @param <EntityType> the returned object type
- * @param <QueryType> the query type
- */
-public abstract class Query<EntityType, QueryType>
+public class RangeItemRequirement implements ItemRequirement
 {
-	protected Predicate<EntityType> predicate = x -> true;
+	private String name;
+	private int startItemId;
+	private int endItemId;
 
-	protected Query()
+	public RangeItemRequirement(String name, int startItemId, int endItemId)
 	{
+		this.name = name;
+		this.startItemId = startItemId;
+		this.endItemId = endItemId;
 	}
 
-	/**
-	 * Executes the query and filters through possible objects, returning only
-	 * those who evaluate true using {@link #predicate}.
-	 *
-	 * @param client the game client
-	 * @return the matching objects
-	 */
-	public abstract EntityType[] result(Client client);
-
-	/**
-	 * Constructs and returns a predicate that will evaluate {@link #predicate}
-	 * and the passed value.
-	 *
-	 * @param other the passed predicate
-	 * @return the combined predicate
-	 */
-	protected Predicate<EntityType> and(Predicate<EntityType> other)
+	@Override
+	public boolean fulfilledBy(int itemId)
 	{
-		if (predicate == null)
+		return itemId >= startItemId && itemId <= endItemId;
+	}
+
+	@Override
+	public boolean fulfilledBy(Item[] items)
+	{
+		for (Item item : items)
 		{
-			return other;
+			if (item.getId() >= startItemId && item.getId() <= endItemId)
+			{
+				return true;
+			}
 		}
-		return predicate.and(other);
+
+		return false;
+	}
+
+	@Override
+	public String getCollectiveName(Client client)
+	{
+		return name;
 	}
 }
