@@ -192,7 +192,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 		if(config.attackStyles()
 			&& weapon!=null
 			&& inGameBit == 1
-			&& (weapon.getText().contains("Crystal halberd") || weapon.getText().contains("Dragon claws"))
+			&& (weapon.getText().contains("Crystal halberd") || weapon.getText().contains("Dragon claws") || weapon.getText().contains("Scythe"))
 			&& client.getWidget(WidgetInfo.BA_ATK_LISTEN_TEXT)!=null)
 		{
 			String style = client.getWidget(WidgetInfo.BA_ATK_LISTEN_TEXT).getText();
@@ -218,6 +218,11 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 					client.getWidget(WidgetInfo.COMBAT_STYLE_ONE).setHidden(false);
 					client.getWidget(WidgetInfo.COMBAT_STYLE_THREE).setHidden(true);
 				}
+				else if(weapon.getText().contains("Scythe"))
+				{
+					client.getWidget(WidgetInfo.COMBAT_STYLE_ONE).setHidden(true);
+					client.getWidget(WidgetInfo.COMBAT_STYLE_THREE).setHidden(true);
+				}
 				else
 				{
 					client.getWidget(WidgetInfo.COMBAT_STYLE_ONE).setHidden(true);
@@ -226,7 +231,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 				client.getWidget(WidgetInfo.COMBAT_STYLE_TWO).setHidden(true);
 				client.getWidget(WidgetInfo.COMBAT_STYLE_FOUR).setHidden(true);
 			}
-			else if(style.contains("Accurate") && weapon.getText().contains("Dragon claws"))
+			else if(style.contains("Accurate") && (weapon.getText().contains("Dragon claws") || weapon.getText().contains("Scythe")))
 			{
 				client.getWidget(WidgetInfo.COMBAT_STYLE_ONE).setHidden(false);
 				client.getWidget(WidgetInfo.COMBAT_STYLE_TWO).setHidden(true);
