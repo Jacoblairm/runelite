@@ -25,15 +25,10 @@
  */
 package net.runelite.client.plugins.batools;
 
-import net.runelite.api.Item;
-import net.runelite.api.Prayer;
-import net.runelite.api.SoundEffectID;
-import net.runelite.api.Tile;
-import net.runelite.api.kit.KitType;
+import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.eventbus.Subscribe;
 import com.google.inject.Provides;
-
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.time.Duration;
@@ -41,28 +36,21 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.inject.Inject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.api.ItemID;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.MessageNode;
-import net.runelite.api.NpcID;
 import net.runelite.api.Varbits;
-import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ConfigChanged;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.HitsplatApplied;
-import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOptionClicked;
-import net.runelite.api.events.NpcDespawned;
-import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.events.WidgetHiddenChanged;
@@ -97,6 +85,30 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 	private GameTimer gameTime;
 	private static final String START_WAVE = "1";
 	private String currentWave = START_WAVE;
+
+	//base
+	//[0] BA_BASE_POINTS,
+	//att
+	//[1] BA_FAILED_ATTACKER_ATTACKS_POINTS,
+	//[2] BA_RANGERS_KILLED,
+	//[3] BA_FIGHTERS_KILLED,
+	//def
+	//[4] BA_RUNNERS_PASSED_POINTS,
+	//[5] BA_RUNNERS_KILLED,
+	//coll
+	//[6] BA_EGGS_COLLECTED_POINTS,
+	//heal
+	//[7] BA_HEALERS_KILLED,
+	//[8] BA_HITPOINTS_REPLENISHED_POINTS,
+	//[9] BA_WRONG_POISON_PACKS_POINTS
+	//[10] BA_EGGS_COLLECTED
+	//[11] BA_FAILED_ATTACKER_ATTACKS
+	//[12] BA_HITPOINTS_REPLENISHED
+
+	final int[] childIDsOfPointsWidgets = new int[]{33, 32, 25, 26, 24, 28, 31, 27, 29, 30, 21, 22, 19};
+
+	private int pointsHealer, pointsDefender , pointsCollector, pointsAttacker, totalEggsCollected, totalIncorrectAttacks, totalHealthReplenished;
+
 	private final List<MenuEntry> entries = new ArrayList<>();
 	private HashMap<Integer, Instant> foodPressed = new HashMap<>();
 	private CycleCounter counter;
@@ -175,10 +187,80 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 			case WidgetID.BA_REWARD_GROUP_ID:
 			{
 				Widget rewardWidget = client.getWidget(WidgetInfo.BA_REWARD_TEXT);
+				Widget pointsWidget = client.getWidget(WidgetID.BA_REWARD_GROUP_ID, 14); //RUNNERS_PASSED
 
 				if (rewardWidget != null && rewardWidget.getText().contains(ENDGAME_REWARD_NEEDLE_TEXT) && gameTime != null)
 				{
 					gameTime = null;
+
+					ChatMessageBuilder message = new ChatMessageBuilder();
+					message.append("Attacker: "+pointsAttacker+" |  Healer: "+pointsHealer+" | Defender: "+pointsDefender+" | Collector: "+pointsCollector);
+					message.append(System.getProperty("line.separator"));
+					message.append(totalEggsCollected + " eggs eollected, "+ totalHealthReplenished + "hp vialed and " + totalIncorrectAttacks+" wrong attacks.");
+
+					chatMessageManager.queue(QueuedMessage.builder()
+							.type(ChatMessageType.CONSOLE)
+							.runeLiteFormattedMessage(message.build())
+							.build());
+				}
+				else if(pointsWidget != null && client.getVar(Varbits.IN_GAME_BA) == 0)
+				{
+					int wavePoints_Attacker, wavePoints_Defender, wavePoints_Healer, wavePoints_Collector, waveEggsCollected, waveHPReplenished, waveFailedAttacks;
+
+					wavePoints_Attacker = wavePoints_Defender = wavePoints_Healer = wavePoints_Collector = Integer.parseInt(client.getWidget(WidgetID.BA_REWARD_GROUP_ID, childIDsOfPointsWidgets[0]).getText()); //set base pts to all roles
+					waveEggsCollected = waveHPReplenished = waveFailedAttacks = 0;
+
+					for (int i = 0; i < childIDsOfPointsWidgets.length; i++)
+					{
+						int value = Integer.parseInt(client.getWidget(WidgetID.BA_REWARD_GROUP_ID, childIDsOfPointsWidgets[i]).getText());
+
+						switch (i)
+						{
+							case 1:
+							case 2:
+							case 3:
+								wavePoints_Attacker += value;
+								pointsAttacker += value;
+								break;
+							case 4:
+							case 5:
+								wavePoints_Defender += value;
+								pointsDefender += value;
+								break;
+							case 6:
+								wavePoints_Collector = value;
+								pointsCollector += value;
+								break;
+							case 7:
+							case 8:
+							case 9:
+								wavePoints_Healer += value;
+								pointsHealer += value;
+								break;
+							case 10:
+								waveEggsCollected = value;
+								totalEggsCollected += value;
+								break;
+							case 11:
+								waveFailedAttacks = value;
+								totalIncorrectAttacks += value;
+								break;
+							case 12:
+								waveHPReplenished = value;
+								totalHealthReplenished += value;
+								break;
+						}
+					}
+
+					ChatMessageBuilder message = new ChatMessageBuilder();
+					message.append("Attacker: "+wavePoints_Attacker+" |  Healer: "+wavePoints_Healer+" | Defender: "+wavePoints_Defender+" | Collector: "+wavePoints_Collector);
+					message.append(System.getProperty("line.separator"));
+					message.append(waveEggsCollected + " eggs eollected, "+ waveHPReplenished + "hp vialed and " + waveFailedAttacks+" wrong attacks.");
+
+					chatMessageManager.queue(QueuedMessage.builder()
+							.type(ChatMessageType.CONSOLE)
+							.runeLiteFormattedMessage(message.build())
+							.build());
 				}
 			}
 		}
@@ -187,6 +269,8 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 	@Subscribe
 	public void onWidgetHiddenChanged(WidgetHiddenChanged event)
 	{
+
+		//Attack Styles
 		Widget weapon = client.getWidget(593, 1);
 
 		if(config.attackStyles()
@@ -277,17 +361,9 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 			{
 				addCounter();
 			}
-			//log.info(""+tickNum++);
 			counter.setCount(tickNum++);
 		}
 
-		if(config.prayerMetronome() && isAnyPrayerActive())
-		{
-			for(int i = 0; i < config.prayerMetronomeVolume(); i++)
-			{
-				client.playSoundEffect(SoundEffectID.GE_INCREMENT_PLOP);
-			}
-		}
 	}
 
 	private Widget getWidget()
@@ -398,10 +474,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 				else if (!option.startsWith("use"))
 				{
 					entries.add(entry);
-					//log.info((entry.getIdentifier() == lastHealer  && entry.getOption().equals("Use")) + " "+((entry.getTarget().equals("<col=ff9040>Poisoned meat") || entry.getTarget().equals("<col=ff9040>Poisoned worms") || entry.getTarget().equals("<col=ff9040>Poisoned tofu")) && entry.getOption().equals("Use")) );
 				}
-				//log.info((entry.getIdentifier() == lastHealer  && entry.getOption().equals("Use"))+ " " + ((entry.getTarget().equals("<col=ff9040>Poisoned meat") || entry.getTarget().equals("<col=ff9040>Poisoned worms") || entry.getTarget().equals("<col=ff9040>Poisoned tofu")) && entry.getOption().equals("Use")));
-				//log.info("Entry identifier = "+ entry.getIdentifier() + "Entry target = "+entry.getTarget());
 			}
 			if (correctHealer != null)
 			{
@@ -439,7 +512,6 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 		if (client.getWidget(WidgetInfo.BA_COLL_LISTEN_TEXT) != null && inGameBit == 1 && config.eggBoi() && event.getTarget().endsWith("egg") && shiftDown)
 		{
 			String[] currentCall = client.getWidget(WidgetInfo.BA_COLL_LISTEN_TEXT).getText().split(" ");
-			log.info("1 " + currentCall[0]);
 			MenuEntry[] menuEntries = client.getMenuEntries();
 			MenuEntry correctEgg = null;
 			entries.clear();
@@ -523,12 +595,6 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 		}
 
 		if (config.healerMenuOption() && target.contains("Penance Healer") && target.contains("<col=ff9040>Poisoned") && target.contains("->"))
-		{
-			foodPressed.put(event.getId(), Instant.now());
-			lastHealer = event.getId();
-			log.info("Last healer changed: " + lastHealer);
-		}
-		if (config.healerMenuOption() && target.contains("Crate") && target.contains("<col=ff9040>Chisel") && target.contains("->"))
 		{
 			foodPressed.put(event.getId(), Instant.now());
 			lastHealer = event.getId();
@@ -716,16 +782,4 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 		}
 	}
 
-	private boolean isAnyPrayerActive()
-	{
-		for (Prayer pray : Prayer.values())//Check if any prayers are active
-		{
-			if (client.isPrayerActive(pray))
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
 }
