@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, Adam <Adam@sigterm.info>
+ * Copyright (c) 2019 Hydrox6 <ikada@protonmail.ch>
+ * Copyright (c) 2019 Adam <Adam@sigterm.info>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,44 +23,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.api.model;
+package net.runelite.client.plugins.cluescrolls;
 
-import lombok.Value;
-import net.runelite.api.Perspective;
+import net.runelite.api.coords.WorldPoint;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import org.junit.Test;
 
-/**
- * Represents a point in a three-dimensional space.
- */
-@Value
-public class Vertex
+public class ClueScrollPluginTest
 {
-	private final int x;
-	private final int y;
-	private final int z;
-
-	/**
-	 * Rotates the triangle by the given orientation.
-	 *
-	 * @param orientation passed orientation
-	 * @return new instance
-	 */
-	public Vertex rotate(int orientation)
+	@Test
+	public void getGetMirrorPoint()
 	{
-		// models are orientated north (1024) and there are 2048 angles total
-		orientation = (orientation + 1024) % 2048;
+		WorldPoint point, converted;
 
-		if (orientation == 0)
-		{
-			return this;
-		}
+		// Zalcano's entrance portal
+		point = new WorldPoint(3282, 6058, 0);
+		converted = ClueScrollPlugin.getMirrorPoint(point, true);
+		assertNotEquals(point, converted);
 
-		int sin = Perspective.SINE[orientation];
-		int cos = Perspective.COSINE[orientation];
+		// Elven Crystal Chest, which is upstairs
+		point = new WorldPoint(3273, 6082, 2);
+		converted = ClueScrollPlugin.getMirrorPoint(point, true);
+		assertNotEquals(point, converted);
 
-		return new Vertex(
-			x * cos + z * sin >> 16,
-			y,
-			z * cos - x * sin >> 16
-		);
+		// Around the area of the Elite coordinate clue
+		point = new WorldPoint(2185, 3280, 0);
+		// To overworld
+		converted = ClueScrollPlugin.getMirrorPoint(point, true);
+		assertEquals(point, converted);
+		// To real
+		converted = ClueScrollPlugin.getMirrorPoint(point, false);
+		assertNotEquals(point, converted);
+
+		// Brugsen Bursen, Grand Exchange
+		point = new WorldPoint(3165, 3477, 0);
+		converted = ClueScrollPlugin.getMirrorPoint(point, false);
+		assertEquals(point, converted);
 	}
 }

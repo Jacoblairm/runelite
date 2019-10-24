@@ -46,7 +46,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ItemsKeptOnDeathPluginTest
@@ -159,6 +159,9 @@ public class ItemsKeptOnDeathPluginTest
 		final Item brace = mItem(ItemID.COMBAT_BRACELET1, 1, "Combat bracelet(1)", true, 0);
 		final int braceletOffset = FixedPriceItem.COMBAT_BRACELET1.getOffset();
 		assertEquals(13500 + braceletOffset, plugin.getDeathPrice(brace));
+
+		final Item amulet = mItem(ItemID.SALVE_AMULETEI, 1, "Salve Amulet(ei)", false, 300);
+		assertEquals(210200, plugin.getDeathPrice(amulet));
 	}
 
 	@Test
