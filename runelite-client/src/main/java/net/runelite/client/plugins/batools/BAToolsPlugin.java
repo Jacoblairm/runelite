@@ -404,6 +404,11 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 
 	private void setColourEgg()
 	{
+		if(!config.eggBoi())
+		{
+			return;
+		}
+
 		if(inGameBit == 0 || client.getWidget(WidgetInfo.BA_COLL_LISTEN_TEXT) == null)
 		{
 			overlay.setEggColour(null);

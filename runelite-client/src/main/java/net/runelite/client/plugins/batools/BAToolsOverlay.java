@@ -48,7 +48,6 @@ import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.TextComponent;
 
-
 class BAToolsOverlay extends Overlay
 {
 	private final Client client;
@@ -57,6 +56,9 @@ class BAToolsOverlay extends Overlay
 	private static final int MAX_DISTANCE = 2500;
 	private final TextComponent textComponent = new TextComponent();
 
+	@Getter
+	@Setter
+	private String eggColour;
 
 	@Inject
 	private BAToolsOverlay(Client client, BAToolsPlugin plugin, BAToolsConfig config)
@@ -70,14 +72,9 @@ class BAToolsOverlay extends Overlay
 
 	}
 
-	@Getter
-	@Setter
-	private String eggColour;
-
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-
 		if (client.getGameState() != GameState.LOGGED_IN || eggColour == null)
 		{
 			return null;
@@ -90,7 +87,6 @@ class BAToolsOverlay extends Overlay
 			return null;
 		}
 
-
 		Collection<GroundItem> groundItemList = plugin.getCollectedGroundItems().values();
 		final LocalPoint localLocation = player.getLocalLocation();
 
@@ -99,14 +95,14 @@ class BAToolsOverlay extends Overlay
 		{
 			if(!(item.getName().toLowerCase().equals(eggColour + " egg")))
 			{
-				return null;
+				continue;
 			}
 
 			Color colorEgg = Color.YELLOW;
 
 			switch (eggColour)
 			{
-				case "red":
+				case "blood":
 					colorEgg = Color.RED;
 					break;
 				case "green":
@@ -135,7 +131,7 @@ class BAToolsOverlay extends Overlay
 					graphics,
 					groundPoint,
 					""+item.getQuantity(),
-					item.getHeight() + 0);
+					item.getHeight() + 2);
 
 			textComponent.setText(item.getQuantity()+"");
 			textComponent.setColor(colorEgg);
