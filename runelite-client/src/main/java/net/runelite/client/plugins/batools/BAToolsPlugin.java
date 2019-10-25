@@ -25,6 +25,8 @@
  */
 package net.runelite.client.plugins.batools;
 
+import net.runelite.api.*;
+import net.runelite.api.events.*;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.eventbus.Subscribe;
 import com.google.inject.Provides;
@@ -35,25 +37,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.List;
 import javax.inject.Inject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
 import net.runelite.client.chat.QueuedMessage;
-import net.runelite.api.ItemID;
-import net.runelite.api.MenuEntry;
-import net.runelite.api.MessageNode;
-import net.runelite.api.Varbits;
-import net.runelite.api.events.ChatMessage;
-import net.runelite.api.events.ConfigChanged;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.MenuEntryAdded;
-import net.runelite.api.events.MenuOptionClicked;
-import net.runelite.api.events.VarbitChanged;
-import net.runelite.api.events.WidgetLoaded;
-import net.runelite.api.events.WidgetHiddenChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetID;
 import net.runelite.api.widgets.WidgetInfo;
@@ -147,6 +137,12 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 	@Inject
 	private KeyManager keyManager;
 
+	@Inject
+	private BAToolsOverlay overlay;
+
+	@Getter
+	private final Map<GroundItem.GroundItemKey, GroundItem> collectedGroundItems = new LinkedHashMap<>();
+
 
 	@Provides
 	BAToolsConfig provideConfig(ConfigManager configManager)
@@ -157,6 +153,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 	@Override
 	protected void startUp() throws Exception
 	{
+		overlayManager.add(overlay);
 		wave_start = Instant.now();
 		foodPressed.clear();
 		keyManager.registerKeyListener(this);
@@ -170,6 +167,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 	@Override
 	protected void shutDown() throws Exception
 	{
+		overlayManager.remove(overlay);
 		removeCounter();
 		inGameBit = 0;
 		gameTime = null;
@@ -177,6 +175,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 		client.setInventoryDragDelay(5);
 		keyManager.unregisterKeyListener(this);
 		shiftDown = false;
+		collectedGroundItems.clear();
 	}
 
 	@Subscribe
@@ -193,15 +192,22 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 				{
 					gameTime = null;
 
-					ChatMessageBuilder message = new ChatMessageBuilder();
-					message.append("Attacker: "+pointsAttacker+" |  Healer: "+pointsHealer+" | Defender: "+pointsDefender+" | Collector: "+pointsCollector);
-					message.append(System.getProperty("line.separator"));
-					message.append(totalEggsCollected + " eggs eollected, "+ totalHealthReplenished + "hp vialed and " + totalIncorrectAttacks+" wrong attacks.");
+					ChatMessageBuilder message = new ChatMessageBuilder()
+					.append("Attacker: ")
+					.append(Color.red, pointsAttacker+"")
+					.append(" |  Healer: ")
+					.append(Color.GREEN, pointsHealer+"")
+					.append(" | Defender: ")
+					.append(Color.blue, pointsDefender+"")
+					.append(" | Collector: ")
+					.append(Color.yellow, pointsCollector+"")
+					.append(System.getProperty("line.separator"))
+					.append(totalEggsCollected + " eggs collected, "+ totalHealthReplenished + " HP vialed and " + totalIncorrectAttacks+" wrong attacks.");
 
-					chatMessageManager.queue(QueuedMessage.builder()
-							.type(ChatMessageType.CONSOLE)
-							.runeLiteFormattedMessage(message.build())
-							.build());
+					if(config.announcePointBreakdown())
+					{
+						chatMessageManager.queue(QueuedMessage.builder().type(ChatMessageType.CONSOLE).runeLiteFormattedMessage(message.build()).build());
+					}
 				}
 				else if(pointsWidget != null && client.getVar(Varbits.IN_GAME_BA) == 0)
 				{
@@ -228,7 +234,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 								pointsDefender += value;
 								break;
 							case 6:
-								wavePoints_Collector = value;
+								wavePoints_Collector += value;
 								pointsCollector += value;
 								break;
 							case 7:
@@ -252,15 +258,22 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 						}
 					}
 
-					ChatMessageBuilder message = new ChatMessageBuilder();
-					message.append("Attacker: "+wavePoints_Attacker+" |  Healer: "+wavePoints_Healer+" | Defender: "+wavePoints_Defender+" | Collector: "+wavePoints_Collector);
-					message.append(System.getProperty("line.separator"));
-					message.append(waveEggsCollected + " eggs eollected, "+ waveHPReplenished + "hp vialed and " + waveFailedAttacks+" wrong attacks.");
+					ChatMessageBuilder message = new ChatMessageBuilder()
+					.append("Attacker: ")
+					.append(Color.red, wavePoints_Attacker+"")
+					.append(" |  Healer: ")
+					.append(Color.GREEN, wavePoints_Healer+"")
+					.append(" | Defender: ")
+					.append(Color.blue, wavePoints_Defender+"")
+					.append(" | Collector: ")
+					.append(Color.yellow, wavePoints_Collector+"")
+					.append(System.getProperty("line.separator"))
+					.append(waveEggsCollected + " eggs eollected, "+ waveHPReplenished + "HP vialed and " + waveFailedAttacks+" wrong attacks.");
 
-					chatMessageManager.queue(QueuedMessage.builder()
-							.type(ChatMessageType.CONSOLE)
-							.runeLiteFormattedMessage(message.build())
-							.build());
+					if(config.announcePointBreakdown())
+					{
+						chatMessageManager.queue(QueuedMessage.builder().type(ChatMessageType.CONSOLE).runeLiteFormattedMessage(message.build()).build());
+					}
 				}
 			}
 		}
@@ -341,6 +354,8 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 			client.setInventoryDragDelay(config.antiDragDelay());
 		}
 
+		setColourEgg();
+
 		Widget callWidget = getWidget();
 
 		if (callWidget != null)
@@ -385,6 +400,26 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 			return client.getWidget(WidgetInfo.BA_HEAL_CALL_TEXT);
 		}
 		return null;
+	}
+
+	private void setColourEgg()
+	{
+		if(inGameBit == 0 || client.getWidget(WidgetInfo.BA_COLL_LISTEN_TEXT) == null)
+		{
+			overlay.setEggColour(null);
+			return;
+		}
+
+		String eggC = client.getWidget(WidgetInfo.BA_COLL_LISTEN_TEXT).getText().split(" ")[0].toLowerCase();
+
+		if(eggC.equals("red")||eggC.equals("green")||eggC.equals("blue"))
+		{
+			overlay.setEggColour(eggC);
+		}
+		else
+		{
+			overlay.setEggColour(null);
+		}
 	}
 
 	@Subscribe
@@ -667,12 +702,71 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 			if (currentWave.equals(START_WAVE))
 			{
 				gameTime = new GameTimer();
+				pointsHealer = pointsDefender = pointsCollector = pointsAttacker = totalEggsCollected = totalIncorrectAttacks = totalHealthReplenished = 0;
 			}
 			else if (gameTime != null)
 			{
 				gameTime.setWaveStartTime();
 			}
 		}
+	}
+
+	@Subscribe
+	public void onItemSpawned(ItemSpawned itemSpawned)
+	{
+		TileItem item = itemSpawned.getItem();
+		Tile tile = itemSpawned.getTile();
+
+		GroundItem groundItem = buildGroundItem(tile, item);
+
+		GroundItem.GroundItemKey groundItemKey = new GroundItem.GroundItemKey(item.getId(), tile.getWorldLocation());
+		GroundItem existing = collectedGroundItems.putIfAbsent(groundItemKey, groundItem);
+		if (existing != null)
+		{
+			existing.setQuantity(existing.getQuantity() + groundItem.getQuantity());
+		}
+	}
+
+	@Subscribe
+	public void onItemDespawned(ItemDespawned itemDespawned)
+	{
+		TileItem item = itemDespawned.getItem();
+		Tile tile = itemDespawned.getTile();
+
+		GroundItem.GroundItemKey groundItemKey = new GroundItem.GroundItemKey(item.getId(), tile.getWorldLocation());
+		GroundItem groundItem = collectedGroundItems.get(groundItemKey);
+		if (groundItem == null)
+		{
+			return;
+		}
+
+		if (groundItem.getQuantity() <= item.getQuantity())
+		{
+			collectedGroundItems.remove(groundItemKey);
+		}
+		else
+		{
+			groundItem.setQuantity(groundItem.getQuantity() - item.getQuantity());
+		}
+	}
+
+	private GroundItem buildGroundItem(final Tile tile, final TileItem item)
+	{
+		// Collect the data for the item
+		final int itemId = item.getId();
+		final ItemComposition itemComposition = itemManager.getItemComposition(itemId);
+		final int realItemId = itemComposition.getNote() != -1 ? itemComposition.getLinkedNoteId() : itemId;
+
+		final GroundItem groundItem = GroundItem.builder()
+				.id(itemId)
+				.location(tile.getWorldLocation())
+				.itemId(realItemId)
+				.quantity(item.getQuantity())
+				.name(itemComposition.getName())
+				.height(tile.getItemLayer().getHeight())
+				.build();
+
+		return groundItem;
 	}
 
 	private void addCounter()

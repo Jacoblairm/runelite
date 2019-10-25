@@ -112,25 +112,6 @@ public interface BAToolsConfig extends Config
 		return false;
 	}
 
-	@ConfigItem(
-		keyName = "prayerMetronome",
-		name = "Prayer Metronome",
-		description = "Similar to metronome plugin but only activates when a prayer is active"
-	)
-	default boolean prayerMetronome()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = "prayerMetronomeVolume",
-		name = "Prayer Metronome Volume",
-		description = "asd"
-	)
-	default int prayerMetronomeVolume()
-	{
-		return 1;
-	}
 
 	@ConfigItem(
 		keyName = "attackStyles",
@@ -185,10 +166,22 @@ public interface BAToolsConfig extends Config
 	@ConfigItem(
 			keyName = "atkShiftToWalk",
 			name = "Attack shift to walk",
-			description = "asd"
+			description = "Hold shift to walk where you click"
 	)
 	default boolean atkShiftToWalk()
 	{
 		return false;
 	}
+
+	@ConfigItem(
+			keyName = "announcePointBreakdown",
+			name = "Show wave / game point breakdown",
+			description = "asd"
+	)
+	default boolean announcePointBreakdown()
+	{
+		return false;
+	}
+
+
 }
