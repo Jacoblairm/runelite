@@ -194,15 +194,15 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 
 					ChatMessageBuilder message = new ChatMessageBuilder()
 					.append("Attacker: ")
-					.append(Color.red, pointsAttacker+"")
+					.append(Color.red, pointsAttacker+80+"")
 					.append(" |  Healer: ")
-					.append(Color.GREEN, pointsHealer+"")
+					.append(Color.GREEN, pointsHealer+80+"")
 					.append(" | Defender: ")
-					.append(Color.blue, pointsDefender+"")
+					.append(Color.blue, pointsDefender+80+"")
 					.append(" | Collector: ")
-					.append(Color.yellow, pointsCollector+"")
+					.append(Color.yellow, pointsCollector+80+"")
 					.append(System.getProperty("line.separator"))
-					.append(totalEggsCollected + " eggs collected, "+ totalHealthReplenished + " HP vialed and " + totalIncorrectAttacks+" wrong attacks.");
+					.append(totalEggsCollected + " eggs collected, "+ totalHealthReplenished + "HP vialed and " + totalIncorrectAttacks+" wrong attacks.");
 
 					if(config.announcePointBreakdown())
 					{
@@ -226,26 +226,23 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 							case 2:
 							case 3:
 								wavePoints_Attacker += value;
-								pointsAttacker += value;
 								break;
 							case 4:
 							case 5:
 								wavePoints_Defender += value;
-								pointsDefender += value;
 								break;
 							case 6:
 								wavePoints_Collector += value;
-								pointsCollector += value;
 								break;
 							case 7:
 							case 8:
 							case 9:
 								wavePoints_Healer += value;
-								pointsHealer += value;
 								break;
 							case 10:
 								waveEggsCollected = value;
 								totalEggsCollected += value;
+
 								break;
 							case 11:
 								waveFailedAttacks = value;
@@ -257,6 +254,11 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 								break;
 						}
 					}
+
+					pointsCollector += wavePoints_Collector;
+					pointsHealer += wavePoints_Healer;
+					pointsDefender += wavePoints_Defender;
+					pointsAttacker += wavePoints_Attacker;
 
 					ChatMessageBuilder message = new ChatMessageBuilder()
 					.append("Attacker: ")
@@ -484,12 +486,6 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 			}
 		}
 
-		//Ladder swap
-		if (config.swapLadder() && option.equals("climb-down") && target.equals("ladder"))
-		{
-			swap("quick-start", option, target, true);
-		}
-
 		//Ctrl Healer
 		if(client.getWidget(WidgetInfo.BA_HEAL_CALL_TEXT) == getWidget() && lastHealer != 0 && inGameBit == 1 && config.ctrlHealer() && ctrlDown)
 		{
@@ -631,14 +627,12 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 			{
 				foodPressed.put(event.getId(), Instant.now());
 			}
-			log.info(target);
 		}
 
 		if (config.healerMenuOption() && target.contains("Penance Healer") && target.contains("<col=ff9040>Poisoned") && target.contains("->"))
 		{
 			foodPressed.put(event.getId(), Instant.now());
 			lastHealer = event.getId();
-			log.info("Last healer changed: " + lastHealer);
 		}
 	}
 

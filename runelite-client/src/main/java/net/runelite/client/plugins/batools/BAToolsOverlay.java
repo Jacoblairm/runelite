@@ -102,7 +102,7 @@ class BAToolsOverlay extends Overlay
 
 			switch (eggColour)
 			{
-				case "blood":
+				case "red":
 					colorEgg = Color.RED;
 					break;
 				case "green":
