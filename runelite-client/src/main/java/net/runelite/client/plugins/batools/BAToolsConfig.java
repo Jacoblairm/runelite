@@ -53,16 +53,6 @@ public interface BAToolsConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "swapLadder",
-		name = "Swap ladder option",
-		description = "Swap Climb-down with Quick-start in the wave lobbies"
-	)
-	default boolean swapLadder()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "healerMenuOption",
 		name = "Healer menu options",
 		description = "Shows time since last food placed on healer"
@@ -175,12 +165,22 @@ public interface BAToolsConfig extends Config
 
 	@ConfigItem(
 			keyName = "announcePointBreakdown",
-			name = "Show wave / game point breakdown",
-			description = "asd"
+			name = "Show wave point breakdown",
+			description = "Shows points for each role at the end of each wave"
 	)
 	default boolean announcePointBreakdown()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+			keyName = "announcePointBreakdownGame",
+			name = "Show game point breakdown",
+			description = "Show at the end of game"
+	)
+	default boolean announcePointBreakdownGame()
+	{
+		return true;
 	}
 
 

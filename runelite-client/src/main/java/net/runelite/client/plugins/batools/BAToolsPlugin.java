@@ -204,7 +204,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 					.append(System.getProperty("line.separator"))
 					.append(totalEggsCollected + " eggs collected, "+ totalHealthReplenished + "HP vialed and " + totalIncorrectAttacks+" wrong attacks.");
 
-					if(config.announcePointBreakdown())
+					if(config.announcePointBreakdownGame()||config.announcePointBreakdown())
 					{
 						chatMessageManager.queue(QueuedMessage.builder().type(ChatMessageType.CONSOLE).runeLiteFormattedMessage(message.build()).build());
 					}
