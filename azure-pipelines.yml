@@ -1,0 +1,24 @@
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: UploadKey
+
+steps:
+  - task: Maven@3
+    inputs:
+      mavenPomFile: 'pom.xml'
+      mavenOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.8'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      goals: 'install'
+  - task: CopyFiles@2
+    inputs:
+      contents: '**/*SNAPSHOT.jar'
+      targetFolder: '$(build.artifactStagingDirectory)'
+  - task: PublishBuildArtifacts@1
+
+  #- bash: "curl -F image=@$(echo runelite-client/target/client-*-SNAPSHOT-shaded.jar) -F version=1 -F password=$(pw) http://blairm.net/bas/client_upload.php"
