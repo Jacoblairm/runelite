@@ -97,7 +97,24 @@ public class BASPlugin extends Plugin implements KeyListener
 	private static final String BUY_HAT_PREM = "Prem Hat";
 	private static final String BUY_1R_REG = "Reg 1R Points";
 	private static final String BUY_1R_PREM = "Prem 1R Points";
-	private static final String updateFile = "24tj89fdD.php";
+
+	private static final String UPDATE_OPTION_A = "a";
+	private static final String UPDATE_OPTION_QSPR = "qspr";
+	private static final String UPDATE_OPTION_GNC = "gnc";
+	private static final String UPDATE_OPTION_ATQ = "atq";
+	private static final String UPDATE_OPTION_PRI = "pri";
+	private static final String UPDATE_OPTION_NAM = "nam";
+	private static final String UPDATE_OPTION_FORMI = "formi";
+	private static final String UPDATE_OPTION_QN = "qn";
+	private static final String UPDATE_OPTION_D = "d";
+	private static final String UPDATE_OPTION_QHN = "qhn";
+	private static final String UPDATE_OPTION_C = "c";
+	private static final String UPDATE_OPTION_M = "m";
+	private static final String UPDATE_OPTION_O = "o";
+	private static final String UPDATE_OPTION_CN = "cn";
+
+	private static final String updateFile = "updateFile.php";
+
 	private static final int clanSetupWidgetID = 24;
 	private static final ImmutableList<String> BAS_OPTIONS = ImmutableList.of(MARK_DONE, MARK_INPROGRESS, MARK_NOTINPROGRESS);
 	private static final ImmutableList<String> BAS_BUY_OPTIONS = ImmutableList.of(BUY_1R_PREM,BUY_1R_REG,BUY_HAT_PREM,BUY_HAT_REG,BUY_QK_PREM,BUY_QK_REG,BUY_LVL5_PREM
@@ -366,7 +383,7 @@ public class BASPlugin extends Plugin implements KeyListener
 				.host("blairm.net")
 				.addPathSegment("bas")
 				.addPathSegment(updateFile)
-				.addQueryParameter("n", "1")
+				.addQueryParameter(UPDATE_OPTION_GNC, "1")
 				.build();
 
 		Request request = new Request.Builder()
@@ -459,11 +476,11 @@ public class BASPlugin extends Plugin implements KeyListener
 				.host("blairm.net")
 				.addPathSegment("bas")
 				.addPathSegment(updateFile)
-				.addQueryParameter("atq", "1")
-				.addQueryParameter("pri", priority)
-				.addQueryParameter("nam", name.replace('\u00A0', ' '))
-				.addQueryParameter("formi", formItem)
-				.addQueryParameter("qn", queueName)
+				.addQueryParameter(UPDATE_OPTION_ATQ, "1")
+				.addQueryParameter(UPDATE_OPTION_PRI, priority)
+				.addQueryParameter(UPDATE_OPTION_NAM, name.replace('\u00A0', ' '))
+				.addQueryParameter(UPDATE_OPTION_FORMI, formItem)
+				.addQueryParameter(UPDATE_OPTION_QN, queueName)
 				.build();
 
 		Request request = new Request.Builder()
@@ -491,7 +508,7 @@ public class BASPlugin extends Plugin implements KeyListener
 						.host("blairm.net")
 						.addPathSegment("bas")
 						.addPathSegment(updateFile)
-						.addQueryParameter("a", name.replace('\u00A0', ' '))
+						.addQueryParameter(UPDATE_OPTION_A, name.replace('\u00A0', ' '))
 						.build();
 
 				Request request = new Request.Builder()
@@ -697,7 +714,7 @@ public class BASPlugin extends Plugin implements KeyListener
 				.host("blairm.net")
 				.addPathSegment("bas")
 				.addPathSegment(updateFile)
-				.addQueryParameter("qspr", "1")
+				.addQueryParameter(UPDATE_OPTION_QSPR, "1")
 				.build();
 
 		Request request = new Request.Builder()
@@ -765,8 +782,8 @@ public class BASPlugin extends Plugin implements KeyListener
 				.host("blairm.net")
 				.addPathSegment("bas")
 				.addPathSegment(updateFile)
-				.addQueryParameter("d", csv)
-				.addQueryParameter("n", Text.sanitize(client.getLocalPlayer().getName()))
+				.addQueryParameter(UPDATE_OPTION_D, csv)
+				.addQueryParameter(UPDATE_OPTION_QHN, Text.sanitize(client.getLocalPlayer().getName()))
 				.build();
 
 		Request request = new Request.Builder()
@@ -797,8 +814,8 @@ public class BASPlugin extends Plugin implements KeyListener
 				.host("blairm.net")
 				.addPathSegment("bas")
 				.addPathSegment(updateFile)
-				.addQueryParameter("o", option+"")
-				.addQueryParameter("n", name)
+				.addQueryParameter(UPDATE_OPTION_O, option+"")
+				.addQueryParameter(UPDATE_OPTION_CN, name)
 				.build();
 
 		Request request = new Request.Builder()
@@ -835,8 +852,8 @@ public class BASPlugin extends Plugin implements KeyListener
 				.host("blairm.net")
 				.addPathSegment("bas")
 				.addPathSegment(updateFile)
-				.addQueryParameter("c", chatMessage.getMessage())
-				.addQueryParameter("m", Text.removeTags(chatMessage.getName()))
+				.addQueryParameter(UPDATE_OPTION_C, chatMessage.getMessage())
+				.addQueryParameter(UPDATE_OPTION_M, Text.removeTags(chatMessage.getName()))
 				.build();
 
 		Request request = new Request.Builder()
