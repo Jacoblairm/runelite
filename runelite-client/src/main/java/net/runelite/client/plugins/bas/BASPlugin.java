@@ -51,6 +51,7 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.ClanMemberManager;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ClanMemberJoined;
 import net.runelite.api.events.ClanMemberLeft;
@@ -178,11 +179,13 @@ public class BASPlugin extends Plugin implements KeyListener
 			return;
 		}
 
+		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+
 		updateCCPanel();
-		if(client.getClanChatCount()>0 && ccCount!=client.getClanChatCount())
+		if(clanMemberManager != null && clanMemberManager.getCount()>0 && ccCount!=clanMemberManager.getCount())
 		{
 			ccUpdate();
-			ccCount=client.getClanChatCount();
+			ccCount=clanMemberManager.getCount();
 		}
 		if(config.getNextCustomer())
 		{
@@ -215,6 +218,8 @@ public class BASPlugin extends Plugin implements KeyListener
 			return;
 		}
 
+		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+
 		int groupId = WidgetInfo.TO_GROUP(event.getActionParam1());
 		String option = event.getOption();
 
@@ -222,7 +227,7 @@ public class BASPlugin extends Plugin implements KeyListener
 				groupId == WidgetInfo.CHATBOX.getGroupId() && !KICK_OPTION.equals(option)//prevent from adding for Kick option (interferes with the raiding party one)
 				)
 		{
-			if(config.getNextCustomer() && groupId == WidgetInfo.CLAN_CHAT.getGroupId() && WidgetInfo.TO_CHILD(event.getActionParam1())==clanSetupWidgetID && client.getClanOwner().equals(ccName))
+			if(config.getNextCustomer() && groupId == WidgetInfo.CLAN_CHAT.getGroupId() && WidgetInfo.TO_CHILD(event.getActionParam1())==clanSetupWidgetID && clanMemberManager != null && clanMemberManager.getClanOwner().equals(ccName))
 			{
 				MenuEntry newMenu = client.getMenuEntries()[1];
 				newMenu.setOption("Next-customer");
@@ -357,16 +362,18 @@ public class BASPlugin extends Plugin implements KeyListener
 
 	private boolean isRank()
 	{
-		if(client.getLocalPlayer().getName()==null || client.getClanChatCount()<1 || !client.getClanOwner().equals(ccName) || !isUpdated)
+		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+
+		if(client.getLocalPlayer().getName()==null || clanMemberManager == null|| clanMemberManager.getCount()<1 || !clanMemberManager.getClanOwner().equals(ccName) || !isUpdated)
 		{
 			return false;
 		}
 
 		boolean isRank = false;
 
-		for(ClanMember member : client.getClanMembers())
+		for(ClanMember member : clanMemberManager.getMembers())
 		{
-			if(Text.sanitize(client.getLocalPlayer().getName()).equals(Text.sanitize(member.getUsername())) && member.getRank().getValue()>=0)
+			if(Text.sanitize(client.getLocalPlayer().getName()).equals(Text.sanitize(member.getName())) && member.getRank().getValue()>=0)
 			{
 				isRank = true;
 			}
@@ -588,9 +595,16 @@ public class BASPlugin extends Plugin implements KeyListener
 
     private void checkUsers()
 	{
-		for (ClanMember memberCM : client.getClanMembers())
+		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+
+		if (clanMemberManager == null)
 		{
-			String member = memberCM.getUsername();
+			return;
+		}
+
+		for (ClanMember memberCM : clanMemberManager.getMembers())
+		{
+			String member = memberCM.getName();
 
 			for (String[] user : csvContent)
 			{
@@ -623,9 +637,9 @@ public class BASPlugin extends Plugin implements KeyListener
 		for (String premMember : ccPremList)
 		{
 			boolean isOnline = false;
-			for (ClanMember memberCM : client.getClanMembers())
+			for (ClanMember memberCM : clanMemberManager.getMembers())
 			{
-				String member = memberCM.getUsername();
+				String member = memberCM.getName();
 				if (premMember.equals(member))
 				{
 					isOnline = true;
@@ -654,12 +668,13 @@ public class BASPlugin extends Plugin implements KeyListener
     private void updateCCPanel()
 	{
 		Widget clanChatWidget = client.getWidget(WidgetInfo.CLAN_CHAT);
+		ClanMemberManager clanMemberManager = client.getClanMemberManager();
 
 		if (clanChatWidget != null && !clanChatWidget.isHidden())
 		{
 			Widget clanChatList = client.getWidget(WidgetInfo.CLAN_CHAT_LIST);
 			Widget owner = client.getWidget(WidgetInfo.CLAN_CHAT_OWNER);
-			if (client.getClanChatCount() > 0 && owner.getText().equals("<col=ffffff>Ba Services</col>"))
+			if (clanMemberManager != null && clanMemberManager.getCount() > 0 && owner.getText().equals("<col=ffffff>Ba Services</col>"))
 			{
 				membersWidgets = clanChatList.getDynamicChildren();
 				for (Widget member : membersWidgets)
@@ -753,15 +768,17 @@ public class BASPlugin extends Plugin implements KeyListener
 
 	private void updateQueue()
 	{
-		if(!config.autoUpdateQueue())
+		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+
+		if(!config.autoUpdateQueue()||clanMemberManager == null)
 		{
 			return;
 		}
 
 		String csv = "";
-		for (ClanMember member : client.getClanMembers())
+		for (ClanMember member : clanMemberManager.getMembers())
 		{
-			String memberName = member.getUsername();
+			String memberName = member.getName();
 			if (csv.equals(""))
 			{
 				csv = memberName+"#"+member.getRank().getValue();
