@@ -40,7 +40,7 @@ import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
 import net.runelite.api.events.ClientTick;
-import net.runelite.api.events.ConfigChanged;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.api.events.FocusChanged;
 import net.runelite.api.events.MenuOpened;
 import net.runelite.api.events.MenuOptionClicked;
@@ -371,11 +371,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 		if (option.equals("talk-to"))
 		{
-			if (config.swapPickpocket() && shouldSwapPickpocket(target))
-			{
-				swap("pickpocket", option, target, index);
-			}
-
 			if (config.swapAbyssTeleport() && target.contains("mage of zamorak"))
 			{
 				swap("teleport", option, target, index);
@@ -458,6 +453,15 @@ public class MenuEntrySwapperPlugin extends Plugin
 			{
 				swap("enchant", option, target, index);
 			}
+
+			if (config.swapStartMinigame())
+			{
+				swap("start-minigame", option, target, index);
+			}
+		}
+		else if (config.swapQuickLeave() && option.equals("leave tomb") && target.equals("tomb door"))
+		{
+			swap("quick-leave", option, target, index);
 		}
 		else if (config.swapTravel() && option.equals("pass") && target.equals("energy barrier"))
 		{
@@ -636,11 +640,6 @@ public class MenuEntrySwapperPlugin extends Plugin
 		{
 			swap("cast", option, target, index);
 		}
-	}
-
-	private static boolean shouldSwapPickpocket(String target)
-	{
-		return !target.startsWith("villager") && !target.startsWith("bandit") && !target.startsWith("menaphite thug");
 	}
 
 	@Subscribe

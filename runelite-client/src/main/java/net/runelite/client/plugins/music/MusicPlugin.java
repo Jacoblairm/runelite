@@ -25,10 +25,12 @@
  */
 package net.runelite.client.plugins.music;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
@@ -37,14 +39,18 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.NPC;
+import net.runelite.api.Player;
 import net.runelite.api.ScriptID;
 import net.runelite.api.SoundEffectID;
 import net.runelite.api.SpriteID;
 import net.runelite.api.VarClientInt;
 import net.runelite.api.VarPlayer;
-import net.runelite.api.events.ConfigChanged;
+import net.runelite.api.events.AreaSoundEffectPlayed;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.api.events.VarClientIntChanged;
@@ -67,10 +73,15 @@ import net.runelite.client.plugins.PluginDescriptor;
 
 @PluginDescriptor(
 	name = "Music",
-	description = "Adds search and filter for the music list, and additional volume control"
+	description = "Adds search and filter for the music list, and additional volume control",
+	tags = {"sound", "volume"}
 )
 public class MusicPlugin extends Plugin
 {
+	private static final Set<Integer> SOURCELESS_PLAYER_SOUNDS = ImmutableSet.of(
+		SoundEffectID.TELEPORT_VWOOP
+	);
+
 	@Inject
 	private Client client;
 
@@ -408,13 +419,21 @@ public class MusicPlugin extends Plugin
 			{
 				{
 					Widget handle = slider.getHandle();
-					Widget[] siblings = handle.getParent().getChildren();
-					if (siblings.length < handle.getIndex() || siblings[handle.getIndex()] != handle)
+					Widget parent = handle.getParent();
+					if (parent == null)
 					{
 						continue;
 					}
-					siblings[slider.getTrack().getIndex()] = null;
-					siblings[handle.getIndex()] = null;
+					else
+					{
+						Widget[] siblings = parent.getChildren();
+						if (siblings == null || handle.getIndex() >= siblings.length || siblings[handle.getIndex()] != handle)
+						{
+							continue;
+						}
+						siblings[slider.getTrack().getIndex()] = null;
+						siblings[handle.getIndex()] = null;
+					}
 				}
 
 				Object[] init = icon.getOnLoadListener();
@@ -441,10 +460,18 @@ public class MusicPlugin extends Plugin
 			Widget handle = slider.getHandle();
 			if (handle != null)
 			{
-				Widget[] siblings = handle.getParent().getChildren();
-				if (siblings.length < handle.getIndex() || siblings[handle.getIndex()] != handle)
+				Widget parent = handle.getParent();
+				if (parent == null)
 				{
 					handle = null;
+				}
+				else
+				{
+					Widget[] siblings = parent.getChildren();
+					if (siblings == null || handle.getIndex() >= siblings.length || siblings[handle.getIndex()] != handle)
+					{
+						handle = null;
+					}
 				}
 			}
 			if (handle == null)
@@ -530,6 +557,35 @@ public class MusicPlugin extends Plugin
 			case "optionsAllSounds":
 				// We have to override this script because it gets invoked periodically from the server
 				client.getIntStack()[client.getIntStackSize() - 1] = -1;
+		}
+	}
+
+	@Subscribe
+	public void onAreaSoundEffectPlayed(AreaSoundEffectPlayed areaSoundEffectPlayed)
+	{
+		Actor source = areaSoundEffectPlayed.getSource();
+		int soundId = areaSoundEffectPlayed.getSoundId();
+		if (source == client.getLocalPlayer()
+			&& musicConfig.muteOwnAreaSounds())
+		{
+			areaSoundEffectPlayed.consume();
+		}
+		else if (source != client.getLocalPlayer()
+			&& (source instanceof Player || (source == null && SOURCELESS_PLAYER_SOUNDS.contains(soundId)))
+			&& musicConfig.muteOtherAreaSounds())
+		{
+			areaSoundEffectPlayed.consume();
+		}
+		else if (source instanceof NPC
+			&& musicConfig.muteNpcAreaSounds())
+		{
+			areaSoundEffectPlayed.consume();
+		}
+		else if (source == null
+			&& !SOURCELESS_PLAYER_SOUNDS.contains(soundId)
+			&& musicConfig.muteEnvironmentAreaSounds())
+		{
+			areaSoundEffectPlayed.consume();
 		}
 	}
 }
