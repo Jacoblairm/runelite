@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Abex
+ * Copyright (c) 2019, Adam <Adam@sigterm.info>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,46 +22,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.kourendlibrary;
+package net.runelite.client.events;
 
-import java.util.HashMap;
-import java.util.Map;
-import lombok.Getter;
+import lombok.Value;
+import net.runelite.http.api.worlds.WorldResult;
 
-import net.runelite.api.NpcID;
-
-enum LibraryCustomer
+/**
+ * Fired when the @{link net.runelite.client.game.WorldService} refreshes the world list
+ */
+@Value
+public class WorldsFetch
 {
-	VILLIA(NpcID.VILLIA, "Villia"),
-	PROFESSOR_GRACKLEBONE(NpcID.PROFESSOR_GRACKLEBONE, "Prof. Gracklebone"),
-	SAM(NpcID.SAM_7049, "Sam");
-
-	@Getter
-	private final int id;
-
-	@Getter
-	private final String name;
-
-	private static final Map<Integer, LibraryCustomer> byId = buildIdMap();
-
-	LibraryCustomer(int id, String name)
-	{
-		this.id = id;
-		this.name = name;
-	}
-
-	static LibraryCustomer getById(int id)
-	{
-		return byId.get(id);
-	}
-
-	private static Map<Integer, LibraryCustomer> buildIdMap()
-	{
-		Map<Integer, LibraryCustomer> byId = new HashMap<>();
-		for (LibraryCustomer c : values())
-		{
-			byId.put(c.id, c);
-		}
-		return byId;
-	}
+	private final WorldResult worldResult;
 }
