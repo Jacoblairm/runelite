@@ -88,6 +88,8 @@ public class BASPlugin extends Plugin implements KeyListener
 	private static final String MARK_DONE = "Mark Done";
 	private static final String MARK_INPROGRESS = "In-Progress";
 	private static final String MARK_NOTINPROGRESS = "Mark Online";
+	private static final String MARK_QHIGNORE = "QH Ignore Customer";
+	private static final String MARK_START_COOLDOWN = "Start Cooldown";
 	private static final String BUY_TORSO_REG = "Reg Torso";
 	private static final String BUY_TORSO_PREM = "Prem Torso";
 	private static final String BUY_LVL5_REG = "Reg Lvl 5s";
@@ -117,7 +119,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	private static final String updateFile = "updateFile.php";
 
 	private static final int clanSetupWidgetID = 24;
-	private static final ImmutableList<String> BAS_OPTIONS = ImmutableList.of(MARK_DONE, MARK_INPROGRESS, MARK_NOTINPROGRESS);
+	private static final ImmutableList<String> BAS_OPTIONS = ImmutableList.of(MARK_DONE, MARK_INPROGRESS, MARK_NOTINPROGRESS, MARK_START_COOLDOWN, MARK_QHIGNORE);
 	private static final ImmutableList<String> BAS_BUY_OPTIONS = ImmutableList.of(BUY_1R_PREM,BUY_1R_REG,BUY_HAT_PREM,BUY_HAT_REG,BUY_QK_PREM,BUY_QK_REG,BUY_LVL5_PREM
 	,BUY_LVL5_REG,BUY_TORSO_PREM,BUY_TORSO_REG);
 	private static int spreadsheetIgnoreLines = 4;
@@ -312,6 +314,14 @@ public class BASPlugin extends Plugin implements KeyListener
 			case MARK_NOTINPROGRESS:
 				appendMessage = "online.";
 				markCustomer(3, event.getMenuTarget());
+				break;
+			case MARK_START_COOLDOWN:
+				appendMessage = "start cooldown.";
+				markCustomer(4, event.getMenuTarget());
+				break;
+			case MARK_QHIGNORE:
+				appendMessage = "Queue Helper ignore.";
+				markCustomer(5, event.getMenuTarget());
 				break;
 		}
 
