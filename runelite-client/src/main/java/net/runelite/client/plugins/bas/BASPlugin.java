@@ -43,8 +43,6 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.RequestBody;
-import okhttp3.MultipartBody;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
@@ -52,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.ClanMemberManager;
+import net.runelite.api.ClanMemberRank;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ClanMemberJoined;
 import net.runelite.api.events.ClanMemberLeft;
@@ -68,10 +67,10 @@ import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.game.ClanManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.client.util.Text;
 import net.runelite.api.ClanMember;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -114,6 +113,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	private static final String UPDATE_OPTION_QHN = "qhn";
 	private static final String UPDATE_OPTION_C = "c";
 	private static final String UPDATE_OPTION_M = "m";
+	private static final String UPDATE_OPTION_R = "r";
 	private static final String UPDATE_OPTION_O = "o";
 	private static final String UPDATE_OPTION_CN = "cn";
 
@@ -139,6 +139,9 @@ public class BASPlugin extends Plugin implements KeyListener
 
 	@Inject
 	private ConfigManager configManager;
+
+	@Inject
+	private ClanManager clanManager;
 
 	@Inject
 	private ChatMessageManager chatMessageManager;
@@ -880,6 +883,8 @@ public class BASPlugin extends Plugin implements KeyListener
 			return;
 		}
 
+		final ClanMemberRank rank = clanManager.getRank(chatMessage.getName());
+
 		OkHttpClient httpClient = RuneLiteAPI.CLIENT;
 		HttpUrl httpUrl = new HttpUrl.Builder()
 				.scheme("http")
@@ -888,6 +893,7 @@ public class BASPlugin extends Plugin implements KeyListener
 				.addPathSegment(updateFile)
 				.addQueryParameter(UPDATE_OPTION_C, chatMessage.getMessage())
 				.addQueryParameter(UPDATE_OPTION_M, Text.removeTags(chatMessage.getName()))
+				.addQueryParameter(UPDATE_OPTION_R, Integer.toString(rank.getValue()))
 				.build();
 
 		Request request = new Request.Builder()
