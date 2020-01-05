@@ -83,6 +83,7 @@ import org.apache.commons.lang3.ArrayUtils;
 )
 public class BASPlugin extends Plugin implements KeyListener
 {
+	private String bot_name = "";
 	private static String ccName = "Ba Services"; //make sure space ascii is correct
 	private static final String KICK_OPTION = "Kick";
 	private static final String MARK_DONE = "Mark Done";
@@ -162,6 +163,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	{
 		keyManager.registerKeyListener(this);
 		isUpdated = updatedClient();
+		get_bot_name();
 	}
 
 	@Override
@@ -387,6 +389,11 @@ public class BASPlugin extends Plugin implements KeyListener
 			{
 				isRank = true;
 			}
+		}
+
+		if(bot_name.equals(Text.sanitize(client.getLocalPlayer().getName())))
+		{
+			isRank = true;
 		}
 		return isRank;
 	}
@@ -898,6 +905,43 @@ public class BASPlugin extends Plugin implements KeyListener
 
 			@Override
 			public void onResponse(Call call, Response response) throws IOException { }
+		});
+	}
+
+	private void get_bot_name()
+	{
+		OkHttpClient httpClient = RuneLiteAPI.CLIENT;
+		Boolean is_Bot = false;
+		HttpUrl httpUrl = new HttpUrl.Builder()
+				.scheme("http")
+				.host("blairm.net")
+				.addPathSegment("bas")
+				.addPathSegment("bot_name.txt")
+				.build();
+
+		Request request = new Request.Builder()
+				.header("User-Agent", "RuneLite")
+				.url(httpUrl)
+				.build();
+
+		httpClient.newCall(request).enqueue(new Callback()
+		{
+			@Override
+			public void onFailure(Call call, IOException e)
+			{
+
+			}
+
+			@Override
+			public void onResponse(Call call, Response response) throws IOException
+			{
+				BufferedReader in = new BufferedReader(new StringReader(response.body().string()));
+				String s;
+				while ((s = in.readLine()) != null)
+				{
+					bot_name = s;
+				}
+			}
 		});
 	}
 
