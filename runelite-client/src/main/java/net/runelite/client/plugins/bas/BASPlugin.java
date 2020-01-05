@@ -911,7 +911,6 @@ public class BASPlugin extends Plugin implements KeyListener
 	private void get_bot_name()
 	{
 		OkHttpClient httpClient = RuneLiteAPI.CLIENT;
-		Boolean is_Bot = false;
 		HttpUrl httpUrl = new HttpUrl.Builder()
 				.scheme("http")
 				.host("blairm.net")
