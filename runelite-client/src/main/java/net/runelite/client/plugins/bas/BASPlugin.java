@@ -165,7 +165,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	protected void startUp() throws Exception
 	{
 		keyManager.registerKeyListener(this);
-		isUpdated = updatedClient();
+		isUpdated = true;//updatedClient();
 		get_bot_name();
 	}
 
