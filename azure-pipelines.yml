@@ -24,13 +24,13 @@ steps:
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
-      mavenOptions: '-Xmx3072m -DskipTests=true -DskipTests'
+      mavenOptions: '-Xmx3072m'
       javaHomeOption: 'JDKVersion'
       jdkVersionOption: '1.8'
       jdkArchitectureOption: 'x64'
-      publishJUnitResults: true
+      publishJUnitResults: false
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
-      goals: 'install'
+      goals: 'install -DskipTests'
 
   - task: CopyFiles@2
     inputs:
