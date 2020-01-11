@@ -85,21 +85,21 @@ public class BASPlugin extends Plugin implements KeyListener
 	private String bot_name = "";
 	private static String ccName = "Ba Services"; //make sure space ascii is correct
 	private static final String KICK_OPTION = "Kick";
-	private static final String MARK_DONE = "<col=DEFFDF>Mark Done";
-	private static final String MARK_INPROGRESS = "<col=DEFFDF>In-Progress";
-	private static final String MARK_NOTINPROGRESS = "<col=DEFFDF>Mark Online";
-	private static final String GET_CUSTOMER_ID = "<col=DEFFDF>Get Customer ID";
-	private static final String MARK_START_COOLDOWN = "<col=DEFFDF>Start Cooldown";
-	private static final String BUY_TORSO_REG = "<col=DEFFDF>Reg Torso";
-	private static final String BUY_TORSO_PREM = "<col=DEFFDF>Prem Torso";
-	private static final String BUY_LVL5_REG = "<col=DEFFDF>Reg Lvl 5s";
-	private static final String BUY_LVL5_PREM = "<col=DEFFDF>Prem Lvl 5s";
-	private static final String BUY_QK_REG = "<col=DEFFDF>Reg Queen Kill";
-	private static final String BUY_QK_PREM = "<col=DEFFDF>Prem Queen Kill";
-	private static final String BUY_HAT_REG = "<col=DEFFDF>Reg Hat";
-	private static final String BUY_HAT_PREM = "<col=DEFFDF>Prem Hat";
-	private static final String BUY_1R_REG = "<col=DEFFDF>Reg 1R Points";
-	private static final String BUY_1R_PREM = "<col=DEFFDF>Prem 1R Points";
+	private static final String MARK_DONE = "Mark Done";
+	private static final String MARK_INPROGRESS = "In-Progress";
+	private static final String MARK_NOTINPROGRESS = "Mark Online";
+	private static final String GET_CUSTOMER_ID = "Get Customer ID";
+	private static final String MARK_START_COOLDOWN = "Start Cooldown";
+	private static final String BUY_TORSO_REG = "Reg Torso";
+	private static final String BUY_TORSO_PREM = "Prem Torso";
+	private static final String BUY_LVL5_REG = "Reg Lvl 5s";
+	private static final String BUY_LVL5_PREM = "Prem Lvl 5s";
+	private static final String BUY_QK_REG = "Reg Queen Kill";
+	private static final String BUY_QK_PREM = "Prem Queen Kill";
+	private static final String BUY_HAT_REG = "Reg Hat";
+	private static final String BUY_HAT_PREM = "Prem Hat";
+	private static final String BUY_1R_REG = "Reg 1R Points";
+	private static final String BUY_1R_PREM = "Prem 1R Points";
 
 	private static final String UPDATE_OPTION_A = "a";
 	private static final String UPDATE_OPTION_QSPR = "qspr";
@@ -253,6 +253,7 @@ public class BASPlugin extends Plugin implements KeyListener
 				for (String basOption : BAS_OPTIONS)
 				{
 					final MenuEntry menuOption = new MenuEntry();
+					log.info(event.getOption());
 					menuOption.setOption(basOption);
 					menuOption.setTarget(event.getTarget());
 					menuOption.setType(MenuAction.RUNELITE.getId());
