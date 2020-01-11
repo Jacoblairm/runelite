@@ -254,7 +254,7 @@ public class BASPlugin extends Plugin implements KeyListener
 				{
 					final MenuEntry menuOption = new MenuEntry();
 					menuOption.setOption(basOption);
-					menuOption.setTarget(event.getTarget().replace("<col=ffffff>", "<col=E3E4FF>"));
+					menuOption.setTarget("<col=E3E4FF>"+event.getTarget());
 					menuOption.setType(MenuAction.RUNELITE.getId());
 					menuOption.setParam0(event.getActionParam0());
 					menuOption.setParam1(event.getActionParam1());
@@ -277,7 +277,7 @@ public class BASPlugin extends Plugin implements KeyListener
 					{
 						final MenuEntry menuOption = new MenuEntry();
 						menuOption.setOption(basOption);
-						menuOption.setTarget(event.getTarget().replace("<col=ffffff>", "<col=DEFFDF>"));
+						menuOption.setTarget("<col=DEFFDF>"+event.getTarget());
 						menuOption.setType(MenuAction.RUNELITE.getId());
 						menuOption.setParam0(event.getActionParam0());
 						menuOption.setParam1(event.getActionParam1());
