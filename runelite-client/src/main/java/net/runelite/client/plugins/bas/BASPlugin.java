@@ -248,14 +248,13 @@ public class BASPlugin extends Plugin implements KeyListener
 				return;
 			}
 
-			if(config.markCustomerOptions())//&& ccMembersList.contains(Text.removeTags(Text.sanitize(event.getTarget()))))
+			if(!shiftDown && config.markCustomerOptions())
 			{
-				log.info(event.getTarget());
 				for (String basOption : BAS_OPTIONS)
 				{
 					final MenuEntry menuOption = new MenuEntry();
-					menuOption.setOption(basOption);
-					menuOption.setTarget("<col=E3E4FF>"+event.getTarget());
+					menuOption.setOption("<col=E3E4FF>"+basOption);
+					menuOption.setTarget(event.getTarget());
 					menuOption.setType(MenuAction.RUNELITE.getId());
 					menuOption.setParam0(event.getActionParam0());
 					menuOption.setParam1(event.getActionParam1());
@@ -264,7 +263,7 @@ public class BASPlugin extends Plugin implements KeyListener
 					insertMenuEntry(menuOption, client.getMenuEntries(), true);
 				}
 			}
-			else if(shiftDown && config.addToQueue())
+			else if(config.addToQueue())
 			{
 				for (String basOption : BAS_BUY_OPTIONS)
 				{
@@ -277,8 +276,8 @@ public class BASPlugin extends Plugin implements KeyListener
 					)
 					{
 						final MenuEntry menuOption = new MenuEntry();
-						menuOption.setOption(basOption);
-						menuOption.setTarget("<col=DEFFDF>"+event.getTarget());
+						menuOption.setOption("<col=DEFFDF>"+basOption);
+						menuOption.setTarget(event.getTarget());
 						menuOption.setType(MenuAction.RUNELITE.getId());
 						menuOption.setParam0(event.getActionParam0());
 						menuOption.setParam1(event.getActionParam1());
@@ -864,7 +863,7 @@ public class BASPlugin extends Plugin implements KeyListener
 			{
 				final String chatMessage = new ChatMessageBuilder()
 						.append(ChatColorType.NORMAL)
-						.append("Error getting ID for "+name+" (maybe let Jacob know)")
+						.append("Error getting ID for "+name)
 						.build();
 
 				chatMessageManager.queue(QueuedMessage.builder()
