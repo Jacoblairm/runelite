@@ -88,7 +88,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	private static final String MARK_DONE = "Mark Done";
 	private static final String MARK_INPROGRESS = "In-Progress";
 	private static final String MARK_NOTINPROGRESS = "Mark Online";
-	private static final String MARK_QHIGNORE = "QH Ignore Customer";
+	private static final String GET_CUSTOMER_ID = "Get Customer ID";
 	private static final String MARK_START_COOLDOWN = "Start Cooldown";
 	private static final String BUY_TORSO_REG = "Reg Torso";
 	private static final String BUY_TORSO_PREM = "Prem Torso";
@@ -120,7 +120,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	private static final String updateFile = "updateFile.php";
 
 	private static final int clanSetupWidgetID = 24;
-	private static final ImmutableList<String> BAS_OPTIONS = ImmutableList.of(MARK_DONE, MARK_INPROGRESS, MARK_NOTINPROGRESS, MARK_START_COOLDOWN, MARK_QHIGNORE);
+	private static final ImmutableList<String> BAS_OPTIONS = ImmutableList.of(MARK_DONE, MARK_INPROGRESS, MARK_NOTINPROGRESS, MARK_START_COOLDOWN, GET_CUSTOMER_ID);
 	private static final ImmutableList<String> BAS_BUY_OPTIONS = ImmutableList.of(BUY_1R_PREM,BUY_1R_REG,BUY_HAT_PREM,BUY_HAT_REG,BUY_QK_PREM,BUY_QK_REG,BUY_LVL5_PREM
 	,BUY_LVL5_REG,BUY_TORSO_PREM,BUY_TORSO_REG);
 	private static int spreadsheetIgnoreLines = 4;
@@ -254,7 +254,7 @@ public class BASPlugin extends Plugin implements KeyListener
 				{
 					final MenuEntry menuOption = new MenuEntry();
 					menuOption.setOption(basOption);
-					menuOption.setTarget(event.getTarget());
+					menuOption.setTarget(event.getTarget().replace("<col=ffffff>", "<col=E3E4FF>"));
 					menuOption.setType(MenuAction.RUNELITE.getId());
 					menuOption.setParam0(event.getActionParam0());
 					menuOption.setParam1(event.getActionParam1());
@@ -277,7 +277,7 @@ public class BASPlugin extends Plugin implements KeyListener
 					{
 						final MenuEntry menuOption = new MenuEntry();
 						menuOption.setOption(basOption);
-						menuOption.setTarget(event.getTarget());
+						menuOption.setTarget(event.getTarget().replace("<col=ffffff>", "<col=DEFFDF>"));
 						menuOption.setType(MenuAction.RUNELITE.getId());
 						menuOption.setParam0(event.getActionParam0());
 						menuOption.setParam1(event.getActionParam1());
@@ -304,6 +304,12 @@ public class BASPlugin extends Plugin implements KeyListener
 			return;
 		}
 
+		if(event.getMenuOption().equals(GET_CUSTOMER_ID))
+		{
+			getCustomerID(event.getMenuTarget());
+			return;
+		}
+
 		String appendMessage = "";
 
 		switch(event.getMenuOption())
@@ -323,10 +329,6 @@ public class BASPlugin extends Plugin implements KeyListener
 			case MARK_START_COOLDOWN:
 				appendMessage = "start cooldown.";
 				markCustomer(4, event.getMenuTarget());
-				break;
-			case MARK_QHIGNORE:
-				appendMessage = "Queue Helper ignore.";
-				markCustomer(5, event.getMenuTarget());
 				break;
 		}
 
@@ -528,15 +530,6 @@ public class BASPlugin extends Plugin implements KeyListener
 				response.close();
 				log.info("added customer to queue");
 
-				OkHttpClient httpClient = RuneLiteAPI.CLIENT;
-
-				HttpUrl httpUrl = new HttpUrl.Builder()
-						.scheme("http")
-						.host("blairm.net")
-						.addPathSegment("bas")
-						.addPathSegment(updateFile)
-						.addQueryParameter(UPDATE_OPTION_A, name.replace('\u00A0', ' '))
-						.build();
 
 				Request request = new Request.Builder()
 						.header("User-Agent", "RuneLite")
@@ -553,38 +546,8 @@ public class BASPlugin extends Plugin implements KeyListener
 						.runeLiteFormattedMessage(chatMessage)
 						.build());
 
-				httpClient.newCall(request).enqueue(new Callback()
-				{
-					@Override
-					public void onFailure(Call call, IOException e)
-					{
+				getCustomerID(name);
 
-					}
-
-					@Override
-					public void onResponse(Call call, Response response) throws IOException
-					{
-						BufferedReader in = new BufferedReader(new StringReader(response.body().string()));
-						String s;
-						String CustId = "";
-						while ((s = in.readLine()) != null)
-						{
-							CustId = s;
-						}
-						final String chatMessage = new ChatMessageBuilder()
-								.append(ChatColorType.NORMAL)
-								.append("Added '" + name + "' to the queue successfully, Their ID is ")
-								.append(ChatColorType.HIGHLIGHT)
-								.append(CustId)
-								.build();
-
-						chatMessageManager.queue(QueuedMessage.builder()
-								.type(ChatMessageType.CONSOLE)
-								.runeLiteFormattedMessage(chatMessage)
-								.build());
-
-					}
-				});
 			}
 		});
 
@@ -872,6 +835,66 @@ public class BASPlugin extends Plugin implements KeyListener
 
 			@Override
 			public void onResponse(Call call, Response response) throws IOException { }
+		});
+	}
+
+	private void getCustomerID(String name)
+	{
+		OkHttpClient httpClient = RuneLiteAPI.CLIENT;
+
+		HttpUrl httpUrl = new HttpUrl.Builder()
+				.scheme("http")
+				.host("blairm.net")
+				.addPathSegment("bas")
+				.addPathSegment(updateFile)
+				.addQueryParameter(UPDATE_OPTION_A, name.replace('\u00A0', ' '))
+				.build();
+
+		Request request = new Request.Builder()
+				.header("User-Agent", "RuneLite")
+				.url(httpUrl)
+				.build();
+
+
+		httpClient.newCall(request).enqueue(new Callback()
+		{
+			@Override
+			public void onFailure(Call call, IOException e)
+			{
+				final String chatMessage = new ChatMessageBuilder()
+						.append(ChatColorType.NORMAL)
+						.append("Error getting ID for "+name+" (maybe let Jacob know)")
+						.build();
+
+				chatMessageManager.queue(QueuedMessage.builder()
+						.type(ChatMessageType.CONSOLE)
+						.runeLiteFormattedMessage(chatMessage)
+						.build());
+			}
+
+			@Override
+			public void onResponse(Call call, Response response) throws IOException
+			{
+				BufferedReader in = new BufferedReader(new StringReader(response.body().string()));
+				String s;
+				String CustId = "";
+				while ((s = in.readLine()) != null)
+				{
+					CustId = s;
+				}
+				final String chatMessage = new ChatMessageBuilder()
+						.append(ChatColorType.NORMAL)
+						.append("ID # for "+name+": ")
+						.append(ChatColorType.HIGHLIGHT)
+						.append(CustId)
+						.build();
+
+				chatMessageManager.queue(QueuedMessage.builder()
+						.type(ChatMessageType.CONSOLE)
+						.runeLiteFormattedMessage(chatMessage)
+						.build());
+
+			}
 		});
 	}
 
