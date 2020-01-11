@@ -248,8 +248,9 @@ public class BASPlugin extends Plugin implements KeyListener
 				return;
 			}
 
-			if(config.markCustomerOptions()&& ccMembersList.contains(Text.removeTags(Text.sanitize(event.getTarget()))))
+			if(config.markCustomerOptions())//&& ccMembersList.contains(Text.removeTags(Text.sanitize(event.getTarget()))))
 			{
+				log.info(event.getTarget());
 				for (String basOption : BAS_OPTIONS)
 				{
 					final MenuEntry menuOption = new MenuEntry();
