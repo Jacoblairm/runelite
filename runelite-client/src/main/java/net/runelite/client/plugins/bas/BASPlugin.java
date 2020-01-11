@@ -122,7 +122,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	private static final int clanSetupWidgetID = 24;
 	private static final ImmutableList<String> BAS_OPTIONS = ImmutableList.of(MARK_DONE, MARK_INPROGRESS, MARK_NOTINPROGRESS, MARK_START_COOLDOWN, GET_CUSTOMER_ID);
 	private static final ImmutableList<String> BAS_BUY_OPTIONS = ImmutableList.of(BUY_1R_PREM,BUY_1R_REG,BUY_HAT_PREM,BUY_HAT_REG,BUY_QK_PREM,BUY_QK_REG,BUY_LVL5_PREM
-	,BUY_LVL5_REG,BUY_TORSO_PREM,BUY_TORSO_REG);
+			,BUY_LVL5_REG,BUY_TORSO_PREM,BUY_TORSO_REG);
 	private static int spreadsheetIgnoreLines = 4;
 	private List<String[]> csvContent = new ArrayList<>();
 	private List<String> ccMembersList = new ArrayList<>();
@@ -205,17 +205,17 @@ public class BASPlugin extends Plugin implements KeyListener
 		}
 	}
 
-    @Subscribe
-    public void onClanMemberJoined(ClanMemberJoined event)
-    {
+	@Subscribe
+	public void onClanMemberJoined(ClanMemberJoined event)
+	{
 		ccUpdate();
-    }
+	}
 
-    @Subscribe
-    public void onClanMemberLeft(ClanMemberLeft event)
-    {
+	@Subscribe
+	public void onClanMemberLeft(ClanMemberLeft event)
+	{
 		ccUpdate();
-    }
+	}
 
 	@Subscribe
 	public void onMenuEntryAdded(MenuEntryAdded event)
@@ -232,7 +232,7 @@ public class BASPlugin extends Plugin implements KeyListener
 
 		if (groupId == WidgetInfo.CLAN_CHAT.getGroupId() ||
 				groupId == WidgetInfo.CHATBOX.getGroupId() && !KICK_OPTION.equals(option)//prevent from adding for Kick option (interferes with the raiding party one)
-				)
+		)
 		{
 			if(config.getNextCustomer() && groupId == WidgetInfo.CLAN_CHAT.getGroupId() && WidgetInfo.TO_CHILD(event.getActionParam1())==clanSetupWidgetID && clanMemberManager != null && clanMemberManager.getClanOwner().equals(ccName))
 			{
@@ -248,13 +248,13 @@ public class BASPlugin extends Plugin implements KeyListener
 				return;
 			}
 
-			if(config.markCustomerOptions()&& ccMembersList.contains(Text.removeTags(Text.sanitize(event.getTarget()))))
+			if(!shiftDown && config.markCustomerOptions())
 			{
 				for (String basOption : BAS_OPTIONS)
 				{
 					final MenuEntry menuOption = new MenuEntry();
 					menuOption.setOption(basOption);
-					menuOption.setTarget(event.getTarget().replace("<col=ffffff>", "<col=E3E4FF>"));
+					menuOption.setTarget(event.getTarget());
 					menuOption.setType(MenuAction.RUNELITE.getId());
 					menuOption.setParam0(event.getActionParam0());
 					menuOption.setParam1(event.getActionParam1());
@@ -263,21 +263,21 @@ public class BASPlugin extends Plugin implements KeyListener
 					insertMenuEntry(menuOption, client.getMenuEntries(), true);
 				}
 			}
-			else if(shiftDown && config.addToQueue())
+			else if(config.addToQueue())
 			{
 				for (String basOption : BAS_BUY_OPTIONS)
 				{
 					if(
 							((basOption.equals(BUY_TORSO_REG)||basOption.equals(BUY_TORSO_PREM))&&config.torsoOptions()) ||
-							((basOption.equals(BUY_HAT_REG)||basOption.equals(BUY_HAT_PREM))&&config.hatOptions()) ||
-							((basOption.equals(BUY_QK_REG)||basOption.equals(BUY_QK_PREM))&&config.qkOptions()) ||
-							((basOption.equals(BUY_1R_REG)||basOption.equals(BUY_1R_PREM))&&config.OneROptions()) ||
-							((basOption.equals(BUY_LVL5_REG)||basOption.equals(BUY_LVL5_PREM))&&config.Lvl5Options())
+									((basOption.equals(BUY_HAT_REG)||basOption.equals(BUY_HAT_PREM))&&config.hatOptions()) ||
+									((basOption.equals(BUY_QK_REG)||basOption.equals(BUY_QK_PREM))&&config.qkOptions()) ||
+									((basOption.equals(BUY_1R_REG)||basOption.equals(BUY_1R_PREM))&&config.OneROptions()) ||
+									((basOption.equals(BUY_LVL5_REG)||basOption.equals(BUY_LVL5_PREM))&&config.Lvl5Options())
 					)
 					{
 						final MenuEntry menuOption = new MenuEntry();
 						menuOption.setOption(basOption);
-						menuOption.setTarget(event.getTarget().replace("<col=ffffff>", "<col=DEFFDF>"));
+						menuOption.setTarget(event.getTarget());
 						menuOption.setType(MenuAction.RUNELITE.getId());
 						menuOption.setParam0(event.getActionParam0());
 						menuOption.setParam1(event.getActionParam1());
@@ -339,10 +339,10 @@ public class BASPlugin extends Plugin implements KeyListener
 				.append(appendMessage)
 				.build();
 
-			chatMessageManager.queue(QueuedMessage.builder()
-					.type(ChatMessageType.CONSOLE)
-					.runeLiteFormattedMessage(chatMessage)
-					.build());
+		chatMessageManager.queue(QueuedMessage.builder()
+				.type(ChatMessageType.CONSOLE)
+				.runeLiteFormattedMessage(chatMessage)
+				.build());
 
 	}
 
@@ -564,7 +564,7 @@ public class BASPlugin extends Plugin implements KeyListener
 		client.setMenuEntries(newMenu);
 	}
 
-    private void ccUpdate()
+	private void ccUpdate()
 	{
 		if(lastCheckTick==client.getTickCount() || !isRank() || !isUpdated)
 		{
@@ -576,7 +576,7 @@ public class BASPlugin extends Plugin implements KeyListener
 		lastCheckTick=client.getTickCount();
 	}
 
-    private void checkUsers()
+	private void checkUsers()
 	{
 		ClanMemberManager clanMemberManager = client.getClanMemberManager();
 
@@ -648,7 +648,7 @@ public class BASPlugin extends Plugin implements KeyListener
 		}
 	}
 
-    private void updateCCPanel()
+	private void updateCCPanel()
 	{
 		Widget clanChatWidget = client.getWidget(WidgetInfo.CLAN_CHAT);
 		ClanMemberManager clanMemberManager = client.getClanMemberManager();
@@ -863,7 +863,7 @@ public class BASPlugin extends Plugin implements KeyListener
 			{
 				final String chatMessage = new ChatMessageBuilder()
 						.append(ChatColorType.NORMAL)
-						.append("Error getting ID for "+name+" (maybe let Jacob know)")
+						.append("Error getting ID for "+name)
 						.build();
 
 				chatMessageManager.queue(QueuedMessage.builder()
