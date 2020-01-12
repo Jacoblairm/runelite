@@ -248,7 +248,7 @@ public class BASPlugin extends Plugin implements KeyListener
 				return;
 			}
 
-			if(!shiftDown && config.markCustomerOptions())
+			if(!shiftDown && config.markCustomerOptions() && ccMembersList.contains(Text.removeTags(Text.sanitize(event.getTarget()))))
 			{
 				for (String basOption : BAS_OPTIONS)
 				{
@@ -263,7 +263,7 @@ public class BASPlugin extends Plugin implements KeyListener
 					insertMenuEntry(menuOption, client.getMenuEntries(), true);
 				}
 			}
-			else if(config.addToQueue())
+			else if(config.addToQueue() && ccMembersList.contains(Text.removeTags(Text.sanitize(event.getTarget()))))
 			{
 				for (String basOption : BAS_BUY_OPTIONS)
 				{
