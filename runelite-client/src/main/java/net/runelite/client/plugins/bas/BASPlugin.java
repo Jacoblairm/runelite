@@ -263,7 +263,7 @@ public class BASPlugin extends Plugin implements KeyListener
 					insertMenuEntry(menuOption, client.getMenuEntries(), true);
 				}
 			}
-			else if(config.addToQueue() && ccMembersList.contains(Text.removeTags(Text.sanitize(event.getTarget()))))
+			else if(config.addToQueue() && !ccMembersList.contains(Text.removeTags(Text.sanitize(event.getTarget()))) && shiftDown)
 			{
 				for (String basOption : BAS_BUY_OPTIONS)
 				{
