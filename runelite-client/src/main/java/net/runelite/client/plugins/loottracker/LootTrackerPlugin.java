@@ -54,6 +54,7 @@ import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -111,7 +112,7 @@ import org.apache.commons.text.WordUtils;
 public class LootTrackerPlugin extends Plugin
 {
 	// Activity/Event loot handling
-	private static final Pattern CLUE_SCROLL_PATTERN = Pattern.compile("You have completed [0-9]+ ([a-z]+) Treasure Trails.");
+	private static final Pattern CLUE_SCROLL_PATTERN = Pattern.compile("You have completed [0-9]+ ([a-z]+) Treasure Trails?\\.");
 	private static final int THEATRE_OF_BLOOD_REGION = 12867;
 
 	// Herbiboar loot handling
@@ -345,7 +346,7 @@ public class LootTrackerPlugin extends Plugin
 		}
 	}
 
-	void addLoot(String name, int combatLevel, LootRecordType type, Collection<ItemStack> items)
+	void addLoot(@NonNull String name, int combatLevel, LootRecordType type, Collection<ItemStack> items)
 	{
 		final LootTrackerItem[] entries = buildEntries(stack(items));
 		SwingUtilities.invokeLater(() -> panel.add(name, type, combatLevel, entries));
@@ -429,6 +430,12 @@ public class LootTrackerPlugin extends Plugin
 				// Clue Scrolls use same InventoryID as Barrows
 				event = eventType;
 				container = client.getItemContainer(InventoryID.BARROWS_REWARD);
+
+				if (event == null)
+				{
+					log.debug("Clue scroll reward interface with no event!");
+					return;
+				}
 				break;
 			case (WidgetID.KINGDOM_GROUP_ID):
 				event = "Kingdom of Miscellania";
