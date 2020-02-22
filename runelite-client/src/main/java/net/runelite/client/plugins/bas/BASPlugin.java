@@ -639,10 +639,10 @@ public class BASPlugin extends Plugin implements KeyListener
 						.build();
 				if (config.premNotifier())
 				{
-					chatMessageManager.queue(QueuedMessage.builder()
-							.type(ChatMessageType.CONSOLE)
-							.runeLiteFormattedMessage(chatMessage)
-							.build());
+					//chatMessageManager.queue(QueuedMessage.builder()
+					//		.type(ChatMessageType.CONSOLE)
+					//		.runeLiteFormattedMessage(chatMessage)
+						//	.build());
 				}
 			}
 		}
