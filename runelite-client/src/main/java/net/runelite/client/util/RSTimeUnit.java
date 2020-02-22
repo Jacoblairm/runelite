@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Jeremy Plsek <https://github.com/jplsek>
+ * Copyright (c) 2020, Jordan Atwood <jordan.atwood423@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,54 +22,69 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.inventorygrid;
+package net.runelite.client.util;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.Units;
+import java.time.Duration;
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalUnit;
+import lombok.Getter;
+import net.runelite.api.Constants;
 
-@ConfigGroup("inventorygrid")
-public interface InventoryGridConfig extends Config
+@Getter
+public enum RSTimeUnit implements TemporalUnit
 {
-	@ConfigItem(
-		keyName = "showItem",
-		name = "Show item",
-		description = "Show a preview of the item in the new slot"
-	)
-	default boolean showItem()
+	CLIENT_TICKS("Client tick", Duration.ofMillis(Constants.CLIENT_TICK_LENGTH)),
+	GAME_TICKS("Game tick", Duration.ofMillis(Constants.GAME_TICK_LENGTH)),
+	;
+
+	private final String name;
+	private final Duration duration;
+
+	RSTimeUnit(String name, Duration estimatedDuration)
+	{
+		this.name = name;
+		duration = estimatedDuration;
+	}
+
+	@Override
+	public boolean isDurationEstimated()
+	{
+		return false;
+	}
+
+	@Override
+	public boolean isDateBased()
+	{
+		return false;
+	}
+
+	@Override
+	public boolean isTimeBased()
 	{
 		return true;
 	}
 
-	@ConfigItem(
-		keyName = "showGrid",
-		name = "Show grid",
-		description = "Show a grid on the inventory while dragging"
-	)
-	default boolean showGrid()
+	@Override
+	public boolean isSupportedBy(Temporal temporal)
 	{
-		return true;
+		return temporal.isSupported(this);
 	}
 
-	@ConfigItem(
-		keyName = "showHighlight",
-		name = "Highlight background",
-		description = "Show a green background highlight on the new slot"
-	)
-	default boolean showHighlight()
+	@Override
+	public <R extends Temporal> R addTo(R temporal, long amount)
 	{
-		return true;
+		return (R) temporal.plus(amount, this);
 	}
 
-	@ConfigItem(
-		keyName = "dragDelay",
-		name = "Drag delay",
-		description = "Time to wait after an item press before the overlay is enabled"
-	)
-	@Units(Units.MILLISECONDS)
-	default int dragDelay()
+	@Override
+	public long between(Temporal temporal1Inclusive, Temporal temporal2Exclusive)
 	{
-		return 0;
+		return temporal1Inclusive.until(temporal2Exclusive, this);
+	}
+
+	@Override
+	public String toString()
+	{
+		return name + " (" + duration.toMillis() + "ms)";
 	}
 }

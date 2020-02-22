@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Jeremy Plsek <https://github.com/jplsek>
+ * Copyright (c) 2020, Jordan Atwood <jordan.atwood423@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,54 +22,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.inventorygrid;
+package net.runelite.client.plugins.cluescrolls.clues;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.Units;
+import static org.junit.Assert.assertNull;
+import org.junit.Test;
 
-@ConfigGroup("inventorygrid")
-public interface InventoryGridConfig extends Config
+public class CipherClueTest
 {
-	@ConfigItem(
-		keyName = "showItem",
-		name = "Show item",
-		description = "Show a preview of the item in the new slot"
-	)
-	default boolean showItem()
+	@Test
+	public void forTextEmptyString()
 	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "showGrid",
-		name = "Show grid",
-		description = "Show a grid on the inventory while dragging"
-	)
-	default boolean showGrid()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "showHighlight",
-		name = "Highlight background",
-		description = "Show a green background highlight on the new slot"
-	)
-	default boolean showHighlight()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "dragDelay",
-		name = "Drag delay",
-		description = "Time to wait after an item press before the overlay is enabled"
-	)
-	@Units(Units.MILLISECONDS)
-	default int dragDelay()
-	{
-		return 0;
+		assertNull(CipherClue.forText(""));
 	}
 }
