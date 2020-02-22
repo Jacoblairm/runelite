@@ -88,6 +88,7 @@ public class ChatCommandsPlugin extends Plugin
 {
 	private static final Pattern KILLCOUNT_PATTERN = Pattern.compile("Your (.+) (?:kill|harvest|lap|completion) count is: <col=ff0000>(\\d+)</col>");
 	private static final Pattern RAIDS_PATTERN = Pattern.compile("Your completed (.+) count is: <col=ff0000>(\\d+)</col>");
+	private static final Pattern RAIDS_DURATION_PATTERN = Pattern.compile("<col=ef20ff>Congratulations - your raid is complete! Duration:</col> <col=ff0000>([0-9:]+)</col>");
 	private static final Pattern WINTERTODT_PATTERN = Pattern.compile("Your subdued Wintertodt count is: <col=ff0000>(\\d+)</col>");
 	private static final Pattern BARROWS_PATTERN = Pattern.compile("Your Barrows chest count is: <col=ff0000>(\\d+)</col>");
 	private static final Pattern KILL_DURATION_PATTERN = Pattern.compile("(?i)^(?:Fight |Lap |Challenge |Corrupted challenge )?duration: <col=ff0000>[0-9:]+</col>\\. Personal best: ([0-9:]+)");
@@ -98,7 +99,10 @@ public class ChatCommandsPlugin extends Plugin
 	private static final String TOTAL_LEVEL_COMMAND_STRING = "!total";
 	private static final String PRICE_COMMAND_STRING = "!price";
 	private static final String LEVEL_COMMAND_STRING = "!lvl";
+	private static final String BOUNTY_HUNTER_HUNTER_COMMAND = "!bh";
+	private static final String BOUNTY_HUNTER_ROGUE_COMMAND = "!bhrogue";
 	private static final String CLUES_COMMAND_STRING = "!clues";
+	private static final String LAST_MAN_STANDING_COMMAND = "!lms";
 	private static final String KILLCOUNT_COMMAND_STRING = "!kc";
 	private static final String CMB_COMMAND_STRING = "!cmb";
 	private static final String QP_COMMAND_STRING = "!qp";
@@ -150,7 +154,10 @@ public class ChatCommandsPlugin extends Plugin
 		chatCommandManager.registerCommandAsync(CMB_COMMAND_STRING, this::combatLevelLookup);
 		chatCommandManager.registerCommand(PRICE_COMMAND_STRING, this::itemPriceLookup);
 		chatCommandManager.registerCommandAsync(LEVEL_COMMAND_STRING, this::playerSkillLookup);
+		chatCommandManager.registerCommandAsync(BOUNTY_HUNTER_HUNTER_COMMAND, this::bountyHunterHunterLookup);
+		chatCommandManager.registerCommandAsync(BOUNTY_HUNTER_ROGUE_COMMAND, this::bountyHunterRogueLookup);
 		chatCommandManager.registerCommandAsync(CLUES_COMMAND_STRING, this::clueLookup);
+		chatCommandManager.registerCommandAsync(LAST_MAN_STANDING_COMMAND, this::lastManStandingLookup);
 		chatCommandManager.registerCommandAsync(KILLCOUNT_COMMAND_STRING, this::killCountLookup, this::killCountSubmit);
 		chatCommandManager.registerCommandAsync(QP_COMMAND_STRING, this::questPointsLookup, this::questPointsSubmit);
 		chatCommandManager.registerCommandAsync(PB_COMMAND, this::personalBestLookup, this::personalBestSubmit);
@@ -214,7 +221,8 @@ public class ChatCommandsPlugin extends Plugin
 	{
 		if (chatMessage.getType() != ChatMessageType.TRADE
 			&& chatMessage.getType() != ChatMessageType.GAMEMESSAGE
-			&& chatMessage.getType() != ChatMessageType.SPAM)
+			&& chatMessage.getType() != ChatMessageType.SPAM
+			&& chatMessage.getType() != ChatMessageType.FRIENDSCHATNOTIFICATION)
 		{
 			return;
 		}
@@ -256,6 +264,17 @@ public class ChatCommandsPlugin extends Plugin
 			int kc = Integer.parseInt(matcher.group(2));
 
 			setKc(boss, kc);
+			if (lastPb > -1)
+			{
+				// lastPb contains the last raid duration and not the personal best, because the raid
+				// complete message does not include the pb. We have to check if it is a new pb:
+				int currentPb = getPb(boss);
+				if (currentPb <= 0 || lastPb < currentPb)
+				{
+					setPb(boss, lastPb);
+				}
+				lastPb = -1;
+			}
 			lastBossKill = boss;
 			return;
 		}
@@ -317,29 +336,44 @@ public class ChatCommandsPlugin extends Plugin
 			matchPb(matcher);
 		}
 
+		matcher = RAIDS_DURATION_PATTERN.matcher(message);
+		if (matcher.find())
+		{
+			matchPb(matcher);
+		}
+
 		lastBossKill = null;
+	}
+
+	private static int timeStringToSeconds(String timeString)
+	{
+		String[] s = timeString.split(":");
+		if (s.length == 2) // mm:ss
+		{
+			return Integer.parseInt(s[0]) * 60 + Integer.parseInt(s[1]);
+		}
+		else if (s.length == 3) // h:mm:ss
+		{
+			return Integer.parseInt(s[0]) * 60 * 60 + Integer.parseInt(s[1]) * 60 + Integer.parseInt(s[2]);
+		}
+		return Integer.parseInt(timeString);
 	}
 
 	private void matchPb(Matcher matcher)
 	{
-		String personalBest = matcher.group(1);
-		String[] s = personalBest.split(":");
-		if (s.length == 2)
+		int seconds = timeStringToSeconds(matcher.group(1));
+		if (lastBossKill != null)
 		{
-			int seconds = Integer.parseInt(s[0]) * 60 + Integer.parseInt(s[1]);
-			if (lastBossKill != null)
-			{
-				// Most bosses sent boss kill message, and then pb message, so we
-				// use the remembered lastBossKill
-				log.debug("Got personal best for {}: {}", lastBossKill, seconds);
-				setPb(lastBossKill, seconds);
-				lastPb = -1;
-			}
-			else
-			{
-				// Some bosses send the pb message, and then the kill message!
-				lastPb = seconds;
-			}
+			// Most bosses sent boss kill message, and then pb message, so we
+			// use the remembered lastBossKill
+			log.debug("Got personal best for {}: {}", lastBossKill, seconds);
+			setPb(lastBossKill, seconds);
+			lastPb = -1;
+		}
+		else
+		{
+			// Some bosses send the pb message, and then the kill message!
+			lastPb = seconds;
 		}
 	}
 
@@ -1024,6 +1058,102 @@ public class ChatCommandsPlugin extends Plugin
 		catch (IOException ex)
 		{
 			log.warn("Error fetching hiscore data", ex);
+		}
+	}
+
+	private void bountyHunterHunterLookup(ChatMessage chatMessage, String message)
+	{
+		if (!config.bh())
+		{
+			return;
+		}
+
+		minigameLookup(chatMessage, HiscoreSkill.BOUNTY_HUNTER_HUNTER);
+	}
+
+	private void bountyHunterRogueLookup(ChatMessage chatMessage, String message)
+	{
+		if (!config.bhRogue())
+		{
+			return;
+		}
+
+		minigameLookup(chatMessage, HiscoreSkill.BOUNTY_HUNTER_ROGUE);
+	}
+
+	private void lastManStandingLookup(ChatMessage chatMessage, String message)
+	{
+		if (!config.lms())
+		{
+			return;
+		}
+
+		minigameLookup(chatMessage, HiscoreSkill.LAST_MAN_STANDING);
+	}
+
+	private void minigameLookup(ChatMessage chatMessage, HiscoreSkill minigame)
+	{
+		try
+		{
+			final Skill hiscoreSkill;
+			final HiscoreLookup lookup = getCorrectLookupFor(chatMessage);
+			final HiscoreResult result = hiscoreClient.lookup(lookup.getName(), lookup.getEndpoint());
+
+			if (result == null)
+			{
+				log.warn("error looking up {} score: not found", minigame.getName().toLowerCase());
+				return;
+			}
+
+			switch (minigame)
+			{
+				case BOUNTY_HUNTER_HUNTER:
+					hiscoreSkill = result.getBountyHunterHunter();
+					break;
+				case BOUNTY_HUNTER_ROGUE:
+					hiscoreSkill = result.getBountyHunterRogue();
+					break;
+				case LAST_MAN_STANDING:
+					hiscoreSkill = result.getLastManStanding();
+					break;
+				default:
+					log.warn("error looking up {} score: not implemented", minigame.getName().toLowerCase());
+					return;
+			}
+
+			int score = hiscoreSkill.getLevel();
+			if (score == -1)
+			{
+				return;
+			}
+
+			ChatMessageBuilder chatMessageBuilder = new ChatMessageBuilder()
+				.append(ChatColorType.NORMAL)
+				.append(minigame.getName())
+				.append(" Score: ")
+				.append(ChatColorType.HIGHLIGHT)
+				.append(Integer.toString(score));
+
+			int rank = hiscoreSkill.getRank();
+			if (rank != -1)
+			{
+				chatMessageBuilder.append(ChatColorType.NORMAL)
+					.append(" Rank: ")
+					.append(ChatColorType.HIGHLIGHT)
+					.append(String.format("%,d", rank));
+			}
+
+			String response = chatMessageBuilder.build();
+
+			log.debug("Setting response {}", response);
+			final MessageNode messageNode = chatMessage.getMessageNode();
+			messageNode.setRuneLiteFormatMessage(response);
+			chatMessageManager.update(messageNode);
+			client.refreshChat();
+		}
+		catch (IOException ex)
+		{
+			log.warn("error looking up {}", minigame.getName().toLowerCase(), ex);
 		}
 	}
 

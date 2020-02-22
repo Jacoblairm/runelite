@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Lotto <https://github.com/devLotto>
+ * Copyright (c) 2020, Jordan Atwood <jordan.atwood423@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,19 +22,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.screenshot.imgur;
+package net.runelite.client.plugins.cluescrolls.clues;
 
-import lombok.Data;
+import static org.junit.Assert.assertNull;
+import org.junit.Test;
 
-@Data
-public class ImageUploadResponse
+public class CrypticClueTest
 {
-	private Data data;
-	private boolean success;
-
-	@lombok.Data
-	public static class Data
+	@Test
+	public void forTextEmptyString()
 	{
-		private String link;
+		assertNull(CrypticClue.forText(""));
 	}
 }

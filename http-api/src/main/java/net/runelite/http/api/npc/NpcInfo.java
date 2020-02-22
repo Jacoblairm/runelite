@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Alexsuperfly <https://github.com/Alexsuperfly>
+ * Copyright (c) 2020, Adam <Adam@sigterm.info>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,12 +22,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package net.runelite.http.api.npc;
 
-package net.runelite.client.plugins.screenshot;
+import lombok.Data;
 
-public enum UploadStyle
+@Data
+public class NpcInfo
 {
-	NEITHER,
-	IMGUR,
-	CLIPBOARD
+	private String name;
+	private int combat;
+	private int hitpoints;
 }
