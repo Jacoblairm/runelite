@@ -287,7 +287,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 					.append(" | Collector: ")
 					.append(Color.yellow, wavePoints_Collector+"")
 					.append(System.getProperty("line.separator"))
-					.append(waveEggsCollected + " eggs eollected, "+ waveHPReplenished + "HP vialed and " + waveFailedAttacks+" wrong attacks.");
+					.append(waveEggsCollected + " eggs collected, "+ waveHPReplenished + "HP vialed and " + waveFailedAttacks+" wrong attacks.");
 
 					if(config.announcePointBreakdown())
 					{
@@ -538,7 +538,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 		}
 
 		//Target menu times/colour
-		if ((event.getTarget().contains("Penance Healer") || event.getTarget().contains("Penance Fighter") || event.getTarget().contains("Penance Ranger")))
+		if ((event.getTarget().contains("Penance Healer") || event.getTarget().contains("Penance Fighter") || event.getTarget().contains("Penance Ranger")) && config.tagging())
 		{
 
 			MenuEntry[] menuEntries = client.getMenuEntries();
