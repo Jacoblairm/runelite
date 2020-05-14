@@ -39,10 +39,11 @@ import java.awt.LayoutManager;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.time.Duration;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -64,19 +65,19 @@ import net.runelite.api.Constants;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
-import net.runelite.client.events.ConfigChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.RuneLite;
 import net.runelite.client.RuneLiteProperties;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.ExpandResizeType;
-import net.runelite.client.config.Keybind;
 import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.config.WarningOnExit;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ClientShutdown;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.NavigationButtonAdded;
 import net.runelite.client.events.NavigationButtonRemoved;
 import net.runelite.client.input.KeyManager;
@@ -89,6 +90,7 @@ import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.OSType;
 import net.runelite.client.util.OSXUtil;
 import net.runelite.client.util.SwingUtil;
+import net.runelite.client.util.WinUtil;
 import org.pushingpixels.substance.internal.SubstanceSynapse;
 import org.pushingpixels.substance.internal.utils.SubstanceCoreUtilities;
 import org.pushingpixels.substance.internal.utils.SubstanceTitlePaneUtilities;
@@ -116,6 +118,8 @@ public class ClientUI
 	private final Applet client;
 	private final ConfigManager configManager;
 	private final Provider<ClientThread> clientThreadProvider;
+	private final EventBus eventBus;
+
 	private final CardLayout cardLayout = new CardLayout();
 	private final Rectangle sidebarButtonPosition = new Rectangle();
 	private boolean withTitleBar;
@@ -133,6 +137,7 @@ public class ClientUI
 	private NavigationButton sidebarNavigationButton;
 	private JButton sidebarNavigationJButton;
 	private Dimension lastClientSize;
+	private Cursor defaultCursor;
 
 	@Inject
 	private ClientUI(
@@ -141,7 +146,8 @@ public class ClientUI
 		MouseManager mouseManager,
 		@Nullable Applet client,
 		ConfigManager configManager,
-		Provider<ClientThread> clientThreadProvider)
+		Provider<ClientThread> clientThreadProvider,
+		EventBus eventBus)
 	{
 		this.config = config;
 		this.keyManager = keyManager;
@@ -149,6 +155,7 @@ public class ClientUI
 		this.client = client;
 		this.configManager = configManager;
 		this.clientThreadProvider = clientThreadProvider;
+		this.eventBus = eventBus;
 	}
 
 	@Subscribe
@@ -289,10 +296,8 @@ public class ClientUI
 
 	/**
 	 * Initialize UI.
-	 * @param runelite runelite instance that will be shut down on exit
-	 * @throws Exception exception that can occur during creation of the UI
 	 */
-	public void init(final RuneLite runelite) throws Exception
+	public void init() throws Exception
 	{
 		SwingUtilities.invokeAndWait(() ->
 		{
@@ -317,14 +322,36 @@ public class ClientUI
 			frame.setLocationRelativeTo(frame.getOwner());
 			frame.setResizable(true);
 
-			SwingUtil.addGracefulExitCallback(frame,
-				() ->
+			frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			frame.addWindowListener(new WindowAdapter()
+			{
+				@Override
+				public void windowClosing(WindowEvent event)
 				{
-					saveClientBoundsConfig();
-					runelite.shutdown();
-				},
-				this::showWarningOnExit
-			);
+					int result = JOptionPane.OK_OPTION;
+
+					if (showWarningOnExit())
+					{
+						try
+						{
+							result = JOptionPane.showConfirmDialog(
+								frame,
+								"Are you sure you want to exit?", "Exit",
+								JOptionPane.OK_CANCEL_OPTION,
+								JOptionPane.QUESTION_MESSAGE);
+						}
+						catch (Exception e)
+						{
+							log.warn("Unexpected exception occurred while check for confirm required", e);
+						}
+					}
+
+					if (result == JOptionPane.OK_OPTION)
+					{
+						shutdownClient();
+					}
+				}
+			});
 
 			container = new JPanel();
 			container.setLayout(new BoxLayout(container, BoxLayout.X_AXIS));
@@ -345,8 +372,7 @@ public class ClientUI
 			frame.add(container);
 
 			// Add key listener
-			final HotkeyListener sidebarListener = new HotkeyListener(() ->
-				new Keybind(KeyEvent.VK_F11, InputEvent.CTRL_DOWN_MASK))
+			final HotkeyListener sidebarListener = new HotkeyListener(config::sidebarToggleKey)
 			{
 				@Override
 				public void hotkeyPressed()
@@ -355,7 +381,19 @@ public class ClientUI
 				}
 			};
 
+			sidebarListener.setEnabledOnLogin(true);
 			keyManager.registerKeyListener(sidebarListener);
+
+			final HotkeyListener pluginPanelListener = new HotkeyListener(config::panelToggleKey)
+			{
+				@Override
+				public void hotkeyPressed()
+				{
+					togglePluginPanel();
+				}
+			};
+
+			keyManager.registerKeyListener(pluginPanelListener);
 
 			// Add mouse listener
 			final MouseListener mouseListener = new MouseAdapter()
@@ -541,6 +579,45 @@ public class ClientUI
 		return false;
 	}
 
+	private void shutdownClient()
+	{
+		saveClientBoundsConfig();
+		ClientShutdown csev = new ClientShutdown();
+		eventBus.post(csev);
+		new Thread(() ->
+		{
+			csev.waitForAllConsumers(Duration.ofSeconds(10));
+
+			if (client != null)
+			{
+				// The client can call System.exit when it's done shutting down
+				// if it doesn't though, we want to exit anyway, so race it
+				int clientShutdownWaitMS;
+				if (client instanceof Client)
+				{
+					((Client) client).stopNow();
+					clientShutdownWaitMS = 1000;
+				}
+				else
+				{
+					// it will continue rendering for about 4 seconds before attempting shutdown if its vanilla
+					client.stop();
+					frame.setVisible(false);
+					clientShutdownWaitMS = 6000;
+				}
+
+				try
+				{
+					Thread.sleep(clientShutdownWaitMS);
+				}
+				catch (InterruptedException ignored)
+				{
+				}
+			}
+			System.exit(0);
+		}, "RuneLite Shutdown").start();
+	}
+
 	/**
 	 * Paint this component to target graphics
 	 *
@@ -587,17 +664,61 @@ public class ClientUI
 	 */
 	public void requestFocus()
 	{
-		if (OSType.getOSType() == OSType.MacOS)
+		switch (OSType.getOSType())
 		{
-			OSXUtil.requestFocus();
+			case MacOS:
+				// On OSX Component::requestFocus has no visible effect, so we use our OSX-specific
+				// requestUserAttention()
+				OSXUtil.requestUserAttention();
+				break;
+			default:
+				frame.requestFocus();
 		}
 
-		frame.requestFocus();
 		giveClientFocus();
 	}
 
 	/**
-	 * Changes cursor for client window. Requires ${@link ClientUI#init(RuneLite)} to be called first.
+	 * Attempt to forcibly bring the client frame to front
+	 */
+	public void forceFocus()
+	{
+		switch (OSType.getOSType())
+		{
+			case MacOS:
+				OSXUtil.requestForeground();
+				break;
+			case Windows:
+				WinUtil.requestForeground(frame);
+				break;
+			default:
+				frame.requestFocus();
+				break;
+		}
+
+		giveClientFocus();
+	}
+
+	/**
+	 * Returns current cursor set on game container
+	 * @return awt cursor
+	 */
+	public Cursor getCurrentCursor()
+	{
+		return container.getCursor();
+	}
+
+	/**
+	 * Returns current custom cursor or default system cursor if cursor is not set
+	 * @return awt cursor
+	 */
+	public Cursor getDefaultCursor()
+	{
+		return defaultCursor != null ? defaultCursor : Cursor.getDefaultCursor();
+	}
+
+	/**
+	 * Changes cursor for client window. Requires ${@link ClientUI#init()} to be called first.
 	 * FIXME: This is working properly only on Windows, Linux and Mac are displaying cursor incorrectly
 	 * @param image cursor image
 	 * @param name  cursor name
@@ -609,9 +730,19 @@ public class ClientUI
 			return;
 		}
 
-		final java.awt.Point hotspot = new java.awt.Point(container.getX(), container.getY());
+		final java.awt.Point hotspot = new java.awt.Point(0, 0);
 		final Cursor cursorAwt = Toolkit.getDefaultToolkit().createCustomCursor(image, hotspot, name);
-		container.setCursor(cursorAwt);
+		defaultCursor = cursorAwt;
+		setCursor(cursorAwt);
+	}
+
+	/**
+	 * Changes cursor for client window. Requires ${@link ClientUI#init()} to be called first.
+	 * @param cursor awt cursor
+	 */
+	public void setCursor(final Cursor cursor)
+	{
+		container.setCursor(cursor);
 	}
 
 	/**
@@ -625,6 +756,7 @@ public class ClientUI
 			return;
 		}
 
+		defaultCursor = null;
 		container.setCursor(Cursor.getDefaultCursor());
 	}
 
@@ -739,6 +871,26 @@ public class ClientUI
 		else
 		{
 			frame.contractBy(pluginToolbar.getWidth());
+		}
+	}
+
+	private void togglePluginPanel()
+	{
+		// Toggle plugin panel open
+		final boolean pluginPanelOpen = pluginPanel != null;
+
+		if (currentButton != null)
+		{
+			currentButton.setSelected(!pluginPanelOpen);
+		}
+
+		if (pluginPanelOpen)
+		{
+			contract();
+		}
+		else
+		{
+			expand(currentNavButton);
 		}
 	}
 

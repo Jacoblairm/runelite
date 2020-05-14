@@ -25,6 +25,8 @@
 package net.runelite.client.config;
 
 import java.awt.Dimension;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import net.runelite.api.Constants;
 import net.runelite.client.Notifier;
 import net.runelite.client.ui.ContainableFrame;
@@ -148,12 +150,12 @@ public interface RuneLiteConfig extends Config
 	@ConfigItem(
 		keyName = "notificationRequestFocus",
 		name = "Request focus on notification",
-		description = "Toggles window focus request",
+		description = "Configures the window focus request type on notification",
 		position = 21
 	)
-	default boolean requestFocusOnNotification()
+	default RequestFocusType notificationRequestFocus()
 	{
-		return true;
+		return RequestFocusType.OFF;
 	}
 
 	@ConfigItem(
@@ -245,6 +247,17 @@ public interface RuneLiteConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "tooltipPosition",
+		name = "Tooltip Position",
+		description = "Configures whether to show the tooltip above or under the cursor",
+		position = 35
+	)
+	default TooltipPositionType tooltipPosition()
+	{
+		return TooltipPositionType.UNDER_CURSOR;
+	}
+
+	@ConfigItem(
 		keyName = "infoBoxVertical",
 		name = "Display infoboxes vertically",
 		description = "Toggles the infoboxes to display vertically",
@@ -256,24 +269,47 @@ public interface RuneLiteConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "infoBoxWrap",
-		name = "Infobox wrap count",
-		description = "Configures the amount of infoboxes shown before wrapping",
-		position = 41
-	)
-	default int infoBoxWrap()
-	{
-		return 4;
-	}
-
-	@ConfigItem(
 		keyName = "infoBoxSize",
-		name = "Infobox size (px)",
+		name = "Infobox size",
 		description = "Configures the size of each infobox in pixels",
 		position = 42
 	)
+	@Units(Units.PIXELS)
 	default int infoBoxSize()
 	{
 		return 35;
+	}
+
+	@ConfigItem(
+		keyName = "blockExtraMouseButtons",
+		name = "Block Extra Mouse Buttons",
+		description = "Blocks extra mouse buttons (4 and above)",
+		position = 43
+	)
+	default boolean blockExtraMouseButtons()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "sidebarToggleKey",
+		name = "Sidebar Toggle Key",
+		description = "The key that will toggle the sidebar (accepts modifiers)",
+		position = 44
+	)
+	default Keybind sidebarToggleKey()
+	{
+		return new Keybind(KeyEvent.VK_F11, InputEvent.CTRL_DOWN_MASK);
+	}
+
+	@ConfigItem(
+		keyName = "panelToggleKey",
+		name = "Plugin Panel Toggle Key",
+		description = "The key that will toggle the current or last opened plugin panel (accepts modifiers)",
+		position = 45
+	)
+	default Keybind panelToggleKey()
+	{
+		return new Keybind(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK);
 	}
 }

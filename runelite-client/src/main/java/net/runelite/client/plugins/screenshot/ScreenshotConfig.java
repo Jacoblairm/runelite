@@ -28,6 +28,7 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.Keybind;
+import net.runelite.client.util.ImageUploadStyle;
 
 @ConfigGroup("screenshot")
 public interface ScreenshotConfig extends Config
@@ -115,9 +116,9 @@ public interface ScreenshotConfig extends Config
 		description = "Configures whether or not screenshots are uploaded to Imgur, or placed on your clipboard",
 		position = 7
 	)
-	default UploadStyle uploadScreenshot()
+	default ImageUploadStyle uploadScreenshot()
 	{
-		return UploadStyle.NEITHER;
+		return ImageUploadStyle.NEITHER;
 	}
 
 	@ConfigItem(
@@ -198,10 +199,21 @@ public interface ScreenshotConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "ccKick",
+		name = "Screenshot Kicks from CC",
+		description = "Take a screenshot when you kick a user from a clan chat.",
+		position = 15
+	)
+	default boolean screenshotCcKick()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "hotkey",
 		name = "Screenshot hotkey",
 		description = "When you press this key a screenshot will be taken",
-		position = 15
+		position = 16
 	)
 	default Keybind hotkey()
 	{

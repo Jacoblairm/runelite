@@ -70,6 +70,7 @@ import net.runelite.http.api.hiscore.HiscoreSkill;
 import static net.runelite.http.api.hiscore.HiscoreSkill.*;
 import net.runelite.http.api.hiscore.HiscoreSkillType;
 import net.runelite.http.api.hiscore.Skill;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
@@ -105,13 +106,17 @@ public class HiscorePanel extends PluginPanel
 		GIANT_MOLE, GROTESQUE_GUARDIANS, HESPORI,
 		KALPHITE_QUEEN, KING_BLACK_DRAGON, KRAKEN,
 		KREEARRA, KRIL_TSUTSAROTH, MIMIC,
-		OBOR, SARACHNIS, SCORPIA,
-		SKOTIZO, THE_GAUNTLET, THE_CORRUPTED_GAUNTLET,
-		THEATRE_OF_BLOOD, THERMONUCLEAR_SMOKE_DEVIL, TZKAL_ZUK,
-		TZTOK_JAD, VENENATIS, VETION,
-		VORKATH, WINTERTODT, ZALCANO,
-		ZULRAH
+		NIGHTMARE, OBOR, SARACHNIS,
+		SCORPIA, SKOTIZO, THE_GAUNTLET,
+		THE_CORRUPTED_GAUNTLET, THEATRE_OF_BLOOD, THERMONUCLEAR_SMOKE_DEVIL,
+		TZKAL_ZUK, TZTOK_JAD, VENENATIS,
+		VETION, VORKATH, WINTERTODT,
+		ZALCANO, ZULRAH
 	);
+
+	private static final HiscoreEndpoint[] ENDPOINTS = new HiscoreEndpoint[] {
+		HiscoreEndpoint.NORMAL, HiscoreEndpoint.IRONMAN, HiscoreEndpoint.HARDCORE_IRONMAN, HiscoreEndpoint.ULTIMATE_IRONMAN, HiscoreEndpoint.DEADMAN, HiscoreEndpoint.TOURNAMENT
+	};
 
 	@Inject
 	ScheduledExecutorService executor;
@@ -121,6 +126,7 @@ public class HiscorePanel extends PluginPanel
 	private Client client;
 
 	private final HiscoreConfig config;
+	private final NameAutocompleter nameAutocompleter;
 
 	private final IconTextField searchBar;
 
@@ -141,10 +147,11 @@ public class HiscorePanel extends PluginPanel
 	private boolean loading = false;
 
 	@Inject
-	public HiscorePanel(HiscoreConfig config)
+	public HiscorePanel(HiscoreConfig config, NameAutocompleter nameAutocompleter)
 	{
 		super();
 		this.config = config;
+		this.nameAutocompleter = nameAutocompleter;
 
 		// The layout seems to be ignoring the top margin and only gives it
 		// a 2-3 pixel margin, so I set the value to 18 to compensate
@@ -198,7 +205,7 @@ public class HiscorePanel extends PluginPanel
 		tabGroup = new MaterialTabGroup();
 		tabGroup.setLayout(new GridLayout(1, 5, 7, 7));
 
-		for (HiscoreEndpoint endpoint : HiscoreEndpoint.values())
+		for (HiscoreEndpoint endpoint : ENDPOINTS)
 		{
 			final BufferedImage iconImage = ImageUtil.getResourceStreamFromClass(getClass(), endpoint.name().toLowerCase() + ".png");
 
@@ -295,6 +302,13 @@ public class HiscorePanel extends PluginPanel
 
 		add(bossPanel, c);
 		c.gridy++;
+
+		addInputKeyListener(nameAutocompleter);
+	}
+
+	void shutdown()
+	{
+		removeInputKeyListener(nameAutocompleter);
 	}
 
 	@Override
@@ -418,6 +432,8 @@ public class HiscorePanel extends PluginPanel
 		searchBar.setEditable(true);
 		loading = false;
 
+		nameAutocompleter.addToSearchHistory(result.getPlayer().toLowerCase());
+
 		for (Map.Entry<HiscoreSkill, JLabel> entry : skillLabels.entrySet())
 		{
 			HiscoreSkill skill = entry.getKey();
@@ -538,26 +554,46 @@ public class HiscorePanel extends PluginPanel
 				}
 				case BOUNTY_HUNTER_ROGUE:
 				{
-					String rank = (result.getBountyHunterRogue().getRank() == -1) ? "Unranked" : QuantityFormatter.formatNumber(result.getBountyHunterRogue().getRank());
+					Skill bountyHunterRogue = result.getBountyHunterRogue();
+					String rank = (bountyHunterRogue.getRank() == -1) ? "Unranked" : QuantityFormatter.formatNumber(bountyHunterRogue.getRank());
 					content += "<p><span style = 'color:white'>Rank:</span> " + rank + "</p>";
+					if (bountyHunterRogue.getLevel() > -1)
+					{
+						content += "<p><span style = 'color:white'>Score:</span> " + QuantityFormatter.formatNumber(bountyHunterRogue.getLevel()) + "</p>";
+					}
 					break;
 				}
 				case BOUNTY_HUNTER_HUNTER:
 				{
-					String rank = (result.getBountyHunterHunter().getRank() == -1) ? "Unranked" : QuantityFormatter.formatNumber(result.getBountyHunterHunter().getRank());
+					Skill bountyHunterHunter = result.getBountyHunterHunter();
+					String rank = (bountyHunterHunter.getRank() == -1) ? "Unranked" : QuantityFormatter.formatNumber(bountyHunterHunter.getRank());
 					content += "<p><span style = 'color:white'>Rank:</span> " + rank + "</p>";
+					if (bountyHunterHunter.getLevel() > -1)
+					{
+						content += "<p><span style = 'color:white'>Score:</span> " + QuantityFormatter.formatNumber(bountyHunterHunter.getLevel()) + "</p>";
+					}
 					break;
 				}
 				case LAST_MAN_STANDING:
 				{
-					String rank = (result.getLastManStanding().getRank() == -1) ? "Unranked" : QuantityFormatter.formatNumber(result.getLastManStanding().getRank());
+					Skill lastManStanding = result.getLastManStanding();
+					String rank = (lastManStanding.getRank() == -1) ? "Unranked" : QuantityFormatter.formatNumber(lastManStanding.getRank());
 					content += "<p><span style = 'color:white'>Rank:</span> " + rank + "</p>";
+					if (lastManStanding.getLevel() > -1)
+					{
+						content += "<p><span style = 'color:white'>Score:</span> " + QuantityFormatter.formatNumber(lastManStanding.getLevel()) + "</p>";
+					}
 					break;
 				}
 				case LEAGUE_POINTS:
 				{
-					String rank = (result.getLeaguePoints().getRank() == -1) ? "Unranked" : QuantityFormatter.formatNumber(result.getLeaguePoints().getRank());
+					Skill leaguePoints = result.getLeaguePoints();
+					String rank = (leaguePoints.getRank() == -1) ? "Unranked" : QuantityFormatter.formatNumber(leaguePoints.getRank());
 					content += "<p><span style = 'color:white'>Rank:</span> " + rank + "</p>";
+					if (leaguePoints.getLevel() > -1)
+					{
+						content += "<p><span style = 'color:white'>Points:</span> " + QuantityFormatter.formatNumber(leaguePoints.getLevel()) + "</p>";
+					}
 					break;
 				}
 				case OVERALL:
@@ -650,7 +686,9 @@ public class HiscorePanel extends PluginPanel
 	private void resetEndpoints()
 	{
 		// Select the correct tab based on the world type.
-		tabGroup.select(tabGroup.getTab(selectWorldEndpoint().ordinal()));
+		HiscoreEndpoint endpoint = selectWorldEndpoint();
+		int idx = ArrayUtils.indexOf(ENDPOINTS, endpoint);
+		tabGroup.select(tabGroup.getTab(idx));
 	}
 
 	private HiscoreEndpoint selectWorldEndpoint()
@@ -659,7 +697,11 @@ public class HiscorePanel extends PluginPanel
 		{
 			EnumSet<WorldType> wTypes = client.getWorldType();
 
-			if (wTypes.contains(WorldType.DEADMAN))
+			if (wTypes.contains(WorldType.DEADMAN_TOURNAMENT))
+			{
+				return HiscoreEndpoint.TOURNAMENT;
+			}
+			else if (wTypes.contains(WorldType.DEADMAN))
 			{
 				return HiscoreEndpoint.DEADMAN;
 			}
