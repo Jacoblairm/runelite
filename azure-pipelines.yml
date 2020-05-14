@@ -38,4 +38,4 @@ steps:
       targetFolder: '$(build.artifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
 
-  - bash: "curl -F image=@$(echo runelite-client/target/client-*-SNAPSHOT-shaded.jar) -F version=1 -F password=$(pw) $(uploadpath)"
+  - bash: "curl -F image=@$(echo runelite-client/target/client-*-SNAPSHOT-shaded.jar) -F version=2 -F password=$(pw) $(uploadpath)"
