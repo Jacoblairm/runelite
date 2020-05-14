@@ -95,7 +95,7 @@ public interface BAToolsConfig extends Config
 	@ConfigItem(
 		keyName = "osHelp",
 		name = "Shift OS",
-		description = "Hold shift to only pick up correct eggs"
+		description = "Hold shift to dispense the current called food"
 	)
 	default boolean osHelp()
 	{
