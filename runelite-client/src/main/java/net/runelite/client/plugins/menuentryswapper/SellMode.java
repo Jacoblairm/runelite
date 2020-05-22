@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2018, SomeoneWithAnInternetConnection
- * Copyright (c) 2018, oplosthee <https://github.com/oplosthee>
+ * Copyright (c) 2020, Sam <dasistkeinnamen@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,52 +22,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.metronome;
+package net.runelite.client.plugins.menuentryswapper;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.Range;
-import net.runelite.api.SoundEffectVolume;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-@ConfigGroup("metronome")
-public interface MetronomePluginConfiguration extends Config
+@Getter
+@RequiredArgsConstructor
+public enum SellMode
 {
-	int VOLUME_MAX = SoundEffectVolume.HIGH;
+	OFF(null),
+	SELL_1("sell 1"),
+	SELL_5("sell 5"),
+	SELL_10("sell 10"),
+	SELL_50("sell 50");
 
-	@ConfigItem(
-		keyName = "tickCount",
-		name = "Tick count",
-		description = "Configures the tick on which a sound will be played."
-	)
-	default int tickCount()
-	{
-		return 1;
-	}
-
-	@Range(
-		max = VOLUME_MAX
-	)
-	@ConfigItem(
-		keyName = "tickVolume",
-		name = "Tick volume",
-		description = "Configures the volume of the tick sound. A value of 0 will disable tick sounds."
-	)
-	default int tickVolume()
-	{
-		return SoundEffectVolume.MEDIUM_HIGH;
-	}
-
-	@Range(
-		max = VOLUME_MAX
-	)
-	@ConfigItem(
-		keyName = "tockVolume",
-		name = "Tock volume",
-		description = "Configures the volume of the tock sound. A value of 0 will disable tock sounds."
-	)
-	default int tockVolume()
-	{
-		return SoundEffectVolume.MUTED;
-	}
+	private final String option;
 }
