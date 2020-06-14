@@ -83,6 +83,7 @@ public class SlayerPluginTest
 
 	private static final String TASK_BOSS_NEW = "Excellent. You're now assigned to kill Vet'ion 3 times.<br>Your reward point tally is 914.";
 	private static final String TASK_BOSS_NEW_THE = "Excellent. You're now assigned to kill the Chaos <br>Elemental 3 times. Your reward point tally is 914.";
+	private static final String TASK_KONAR_BOSS = "You're now assigned to bring balance to the Alchemical<br>Hydra 35 times. Your reward point tally is 724.";
 
 	private static final String TASK_EXISTING = "You're still hunting suqahs; you have 222 to go. Come<br>back when you've finished your task.";
 
@@ -266,7 +267,7 @@ public class SlayerPluginTest
 
 		assertEquals("Vet'ion", slayerPlugin.getTaskName());
 		assertEquals(3, slayerPlugin.getAmount());
-		assertEquals(914, slayerPlugin.getPoints());
+		verify(slayerConfig).points(914);
 	}
 
 	@Test
@@ -279,7 +280,20 @@ public class SlayerPluginTest
 
 		assertEquals("Chaos Elemental", slayerPlugin.getTaskName());
 		assertEquals(3, slayerPlugin.getAmount());
-		assertEquals(914, slayerPlugin.getPoints());
+		verify(slayerConfig).points(914);
+	}
+
+	@Test
+	public void testKonarBossTask()
+	{
+		Widget npcDialog = mock(Widget.class);
+		when(npcDialog.getText()).thenReturn(TASK_KONAR_BOSS);
+		when(client.getWidget(WidgetInfo.DIALOG_NPC_TEXT)).thenReturn(npcDialog);
+		slayerPlugin.onGameTick(new GameTick());
+
+		assertEquals("Alchemical Hydra", slayerPlugin.getTaskName());
+		assertEquals(35, slayerPlugin.getAmount());
+		verify(slayerConfig).points(724);
 	}
 
 	@Test
@@ -346,7 +360,7 @@ public class SlayerPluginTest
 		when(client.getWidget(WidgetInfo.SLAYER_REWARDS_TOPBAR)).thenReturn(rewardBar);
 		slayerPlugin.onGameTick(new GameTick());
 
-		assertEquals(17566, slayerPlugin.getPoints());
+		verify(slayerConfig).points(17566);
 	}
 
 	@Test
@@ -355,7 +369,7 @@ public class SlayerPluginTest
 		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Perterter", TASK_ONE, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
-		assertEquals(1, slayerPlugin.getStreak());
+		verify(slayerConfig).streak(1);
 		assertEquals("", slayerPlugin.getTaskName());
 		assertEquals(0, slayerPlugin.getAmount());
 	}
@@ -366,7 +380,7 @@ public class SlayerPluginTest
 		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Perterter", TASK_COMPLETE_NO_POINTS, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
-		assertEquals(3, slayerPlugin.getStreak());
+		verify(slayerConfig).streak(3);
 		assertEquals("", slayerPlugin.getTaskName());
 		assertEquals(0, slayerPlugin.getAmount());
 	}
@@ -377,10 +391,10 @@ public class SlayerPluginTest
 		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Perterter", TASK_POINTS, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
-		assertEquals(9, slayerPlugin.getStreak());
+		verify(slayerConfig).streak(9);
 		assertEquals("", slayerPlugin.getTaskName());
 		assertEquals(0, slayerPlugin.getAmount());
-		assertEquals(18_000, slayerPlugin.getPoints());
+		verify(slayerConfig).points(18_000);
 	}
 
 	@Test
@@ -389,10 +403,10 @@ public class SlayerPluginTest
 		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Perterter", TASK_LARGE_STREAK, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
-		assertEquals(2465, slayerPlugin.getStreak());
+		verify(slayerConfig).streak(2465);
 		assertEquals("", slayerPlugin.getTaskName());
 		assertEquals(0, slayerPlugin.getAmount());
-		assertEquals(17_566_000, slayerPlugin.getPoints());
+		verify(slayerConfig).points(17_566_000);
 	}
 
 	@Test

@@ -25,6 +25,7 @@
  */
 package net.runelite.client.plugins.chatcommands;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Provides;
 import java.io.IOException;
 import java.util.EnumSet;
@@ -47,11 +48,14 @@ import net.runelite.api.VarPlayer;
 import net.runelite.api.Varbits;
 import net.runelite.api.WorldType;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.vars.AccountType;
 import net.runelite.api.widgets.Widget;
+import static net.runelite.api.widgets.WidgetID.ADVENTURE_LOG_ID;
+import static net.runelite.api.widgets.WidgetID.COUNTERS_LOG_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.KILL_LOGS_GROUP_ID;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.chat.ChatColorType;
@@ -66,7 +70,7 @@ import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.util.QuantityFormatter;
-import static net.runelite.client.util.Text.sanitize;
+import net.runelite.client.util.Text;
 import net.runelite.http.api.chat.ChatClient;
 import net.runelite.http.api.chat.Duels;
 import net.runelite.http.api.hiscore.HiscoreClient;
@@ -88,13 +92,19 @@ public class ChatCommandsPlugin extends Plugin
 {
 	private static final Pattern KILLCOUNT_PATTERN = Pattern.compile("Your (.+) (?:kill|harvest|lap|completion) count is: <col=ff0000>(\\d+)</col>");
 	private static final Pattern RAIDS_PATTERN = Pattern.compile("Your completed (.+) count is: <col=ff0000>(\\d+)</col>");
-	private static final Pattern RAIDS_DURATION_PATTERN = Pattern.compile("<col=ef20ff>Congratulations - your raid is complete! Duration:</col> <col=ff0000>([0-9:]+)</col>");
+	private static final Pattern RAIDS_PB_PATTERN = Pattern.compile("<col=ef20ff>Congratulations - your raid is complete!</col><br>Team size: <col=ff0000>(?:[0-9]+ players|Solo)</col> Duration:</col> <col=ff0000>([0-9:]+)</col> \\(new personal best\\)</col>");
+	private static final Pattern TOB_WAVE_PB_PATTERN = Pattern.compile("^.*Theatre of Blood wave completion time: <col=ff0000>([0-9:]+)</col> \\(Personal best!\\)");
+	private static final Pattern TOB_WAVE_DURATION_PATTERN = Pattern.compile("^.*Theatre of Blood wave completion time: <col=ff0000>[0-9:]+</col><br></col>Personal best: ([0-9:]+)");
 	private static final Pattern WINTERTODT_PATTERN = Pattern.compile("Your subdued Wintertodt count is: <col=ff0000>(\\d+)</col>");
 	private static final Pattern BARROWS_PATTERN = Pattern.compile("Your Barrows chest count is: <col=ff0000>(\\d+)</col>");
 	private static final Pattern KILL_DURATION_PATTERN = Pattern.compile("(?i)^(?:Fight |Lap |Challenge |Corrupted challenge )?duration: <col=ff0000>[0-9:]+</col>\\. Personal best: ([0-9:]+)");
 	private static final Pattern NEW_PB_PATTERN = Pattern.compile("(?i)^(?:Fight |Lap |Challenge |Corrupted challenge )?duration: <col=ff0000>([0-9:]+)</col> \\(new personal best\\)");
 	private static final Pattern DUEL_ARENA_WINS_PATTERN = Pattern.compile("You (were defeated|won)! You have(?: now)? won (\\d+) duels?");
 	private static final Pattern DUEL_ARENA_LOSSES_PATTERN = Pattern.compile("You have(?: now)? lost (\\d+) duels?");
+	private static final Pattern ADVENTURE_LOG_TITLE_PATTERN = Pattern.compile("The Exploits of (.+)");
+	private static final Pattern ADVENTURE_LOG_COX_PB_PATTERN = Pattern.compile("Fastest (?:kill|run)(?: - \\(Team size: (?:[0-9]+ players|Solo)\\))?: ([0-9:]+)");
+	private static final Pattern ADVENTURE_LOG_BOSS_PB_PATTERN = Pattern.compile("[a-zA-Z]+(?: [a-zA-Z]+)*");
+	private static final Pattern ADVENTURE_LOG_PB_PATTERN = Pattern.compile("(" + ADVENTURE_LOG_BOSS_PB_PATTERN + "(?: - " + ADVENTURE_LOG_BOSS_PB_PATTERN + ")*) (?:" + ADVENTURE_LOG_COX_PB_PATTERN + "( )*)+");
 
 	private static final String TOTAL_LEVEL_COMMAND_STRING = "!total";
 	private static final String PRICE_COMMAND_STRING = "!price";
@@ -110,10 +120,15 @@ public class ChatCommandsPlugin extends Plugin
 	private static final String GC_COMMAND_STRING = "!gc";
 	private static final String DUEL_ARENA_COMMAND = "!duels";
 
-	private final HiscoreClient hiscoreClient = new HiscoreClient();
+	@VisibleForTesting
+	static final int ADV_LOG_EXPLOITS_TEXT_INDEX = 1;
+
 	private final ChatClient chatClient = new ChatClient();
 
-	private boolean logKills;
+	private boolean bossLogLoaded;
+	private boolean advLogLoaded;
+	private boolean countersLogLoaded;
+	private String pohOwner;
 	private HiscoreEndpoint hiscoreEndpoint; // hiscore endpoint for current player
 	private String lastBossKill;
 	private int lastPb = -1;
@@ -144,6 +159,9 @@ public class ChatCommandsPlugin extends Plugin
 
 	@Inject
 	private ChatKeyboardListener chatKeyboardListener;
+
+	@Inject
+	private HiscoreClient hiscoreClient;
 
 	@Override
 	public void startUp()
@@ -336,7 +354,19 @@ public class ChatCommandsPlugin extends Plugin
 			matchPb(matcher);
 		}
 
-		matcher = RAIDS_DURATION_PATTERN.matcher(message);
+		matcher = RAIDS_PB_PATTERN.matcher(message);
+		if (matcher.find())
+		{
+			matchPb(matcher);
+		}
+
+		matcher = TOB_WAVE_PB_PATTERN.matcher(message);
+		if (matcher.find())
+		{
+			matchPb(matcher);
+		}
+
+		matcher = TOB_WAVE_DURATION_PATTERN.matcher(message);
 		if (matcher.find())
 		{
 			matchPb(matcher);
@@ -380,36 +410,84 @@ public class ChatCommandsPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		if (!logKills)
+		if (client.getLocalPlayer() == null)
 		{
 			return;
 		}
 
-		logKills = false;
-
-		Widget title = client.getWidget(WidgetInfo.KILL_LOG_TITLE);
-		Widget bossMonster = client.getWidget(WidgetInfo.KILL_LOG_MONSTER);
-		Widget bossKills = client.getWidget(WidgetInfo.KILL_LOG_KILLS);
-
-		if (title == null || bossMonster == null || bossKills == null
-			|| !"Boss Kill Log".equals(title.getText()))
+		if (advLogLoaded)
 		{
-			return;
-		}
+			advLogLoaded = false;
 
-		Widget[] bossChildren = bossMonster.getChildren();
-		Widget[] killsChildren = bossKills.getChildren();
-
-		for (int i = 0; i < bossChildren.length; ++i)
-		{
-			Widget boss = bossChildren[i];
-			Widget kill = killsChildren[i];
-
-			String bossName = boss.getText().replace(":", "");
-			int kc = Integer.parseInt(kill.getText().replace(",", ""));
-			if (kc != getKc(bossName))
+			Widget adventureLog = client.getWidget(WidgetInfo.ADVENTURE_LOG);
+			Matcher advLogExploitsText = ADVENTURE_LOG_TITLE_PATTERN.matcher(adventureLog.getChild(ADV_LOG_EXPLOITS_TEXT_INDEX).getText());
+			if (advLogExploitsText.find())
 			{
-				setKc(bossName, kc);
+				pohOwner = advLogExploitsText.group(1);
+			}
+		}
+
+		if (bossLogLoaded && (pohOwner == null || pohOwner.equals(client.getLocalPlayer().getName())))
+		{
+			bossLogLoaded = false;
+
+			Widget title = client.getWidget(WidgetInfo.KILL_LOG_TITLE);
+			Widget bossMonster = client.getWidget(WidgetInfo.KILL_LOG_MONSTER);
+			Widget bossKills = client.getWidget(WidgetInfo.KILL_LOG_KILLS);
+
+			if (title == null || bossMonster == null || bossKills == null
+				|| !"Boss Kill Log".equals(title.getText()))
+			{
+				return;
+			}
+
+			Widget[] bossChildren = bossMonster.getChildren();
+			Widget[] killsChildren = bossKills.getChildren();
+
+			for (int i = 0; i < bossChildren.length; ++i)
+			{
+				Widget boss = bossChildren[i];
+				Widget kill = killsChildren[i];
+
+				String bossName = boss.getText().replace(":", "");
+				int kc = Integer.parseInt(kill.getText().replace(",", ""));
+				if (kc != getKc(longBossName(bossName)))
+				{
+					setKc(longBossName(bossName), kc);
+				}
+			}
+		}
+
+		if (countersLogLoaded && pohOwner.equals(client.getLocalPlayer().getName()))
+		{
+			countersLogLoaded = false;
+
+			String counterText = Text.sanitizeMultilineText(client.getWidget(WidgetInfo.COUNTERS_LOG_TEXT).getText());
+			Matcher mCounterText = ADVENTURE_LOG_PB_PATTERN.matcher(counterText);
+			while (mCounterText.find())
+			{
+				String bossName = longBossName(mCounterText.group(1));
+				if (bossName.equalsIgnoreCase("chambers of xeric") ||
+					bossName.equalsIgnoreCase("chambers of xeric challenge mode"))
+				{
+					Matcher mCoxRuns = ADVENTURE_LOG_COX_PB_PATTERN.matcher(mCounterText.group());
+					int bestPbTime = Integer.MAX_VALUE;
+					while (mCoxRuns.find())
+					{
+						bestPbTime = Math.min(timeStringToSeconds(mCoxRuns.group(1)), bestPbTime);
+					}
+					// So we don't reset people's already saved PB's if they had one before the update
+					int currentPb = getPb(bossName);
+					if (currentPb == 0 || currentPb > bestPbTime)
+					{
+						setPb(bossName, bestPbTime);
+					}
+				}
+				else
+				{
+					String pbTime = mCounterText.group(2);
+					setPb(bossName, timeStringToSeconds(pbTime));
+				}
 			}
 		}
 	}
@@ -417,14 +495,29 @@ public class ChatCommandsPlugin extends Plugin
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded widget)
 	{
-		// don't load kc if in an instance, if the player is in another players poh
-		// and reading their boss log
-		if (widget.getGroupId() != KILL_LOGS_GROUP_ID || client.isInInstancedRegion())
+		switch (widget.getGroupId())
 		{
-			return;
+			case ADVENTURE_LOG_ID:
+				advLogLoaded = true;
+				break;
+			case KILL_LOGS_GROUP_ID:
+				bossLogLoaded = true;
+				break;
+			case COUNTERS_LOG_GROUP_ID:
+				countersLogLoaded = true;
+				break;
 		}
+	}
 
-		logKills = true;
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event)
+	{
+		switch (event.getGameState())
+		{
+			case LOADING:
+			case HOPPING:
+				pohOwner = null;
+		}
 	}
 
 	@Subscribe
@@ -487,7 +580,7 @@ public class ChatCommandsPlugin extends Plugin
 		}
 		else
 		{
-			player = sanitize(chatMessage.getName());
+			player = Text.sanitize(chatMessage.getName());
 		}
 
 		search = longBossName(search);
@@ -568,7 +661,7 @@ public class ChatCommandsPlugin extends Plugin
 		}
 		else
 		{
-			player = sanitize(chatMessage.getName());
+			player = Text.sanitize(chatMessage.getName());
 		}
 
 		Duels duels;
@@ -625,7 +718,7 @@ public class ChatCommandsPlugin extends Plugin
 		}
 		else
 		{
-			player = sanitize(chatMessage.getName());
+			player = Text.sanitize(chatMessage.getName());
 		}
 
 		int qp;
@@ -699,7 +792,7 @@ public class ChatCommandsPlugin extends Plugin
 		}
 		else
 		{
-			player = sanitize(chatMessage.getName());
+			player = Text.sanitize(chatMessage.getName());
 		}
 
 		search = longBossName(search);
@@ -782,7 +875,7 @@ public class ChatCommandsPlugin extends Plugin
 		}
 		else
 		{
-			player = sanitize(chatMessage.getName());
+			player = Text.sanitize(chatMessage.getName());
 		}
 
 		int gc;
@@ -949,21 +1042,27 @@ public class ChatCommandsPlugin extends Plugin
 
 			final Skill hiscoreSkill = result.getSkill();
 
-			final String response = new ChatMessageBuilder()
+			ChatMessageBuilder chatMessageBuilder = new ChatMessageBuilder()
 				.append(ChatColorType.NORMAL)
 				.append("Level ")
 				.append(ChatColorType.HIGHLIGHT)
 				.append(skill.getName()).append(": ").append(String.valueOf(hiscoreSkill.getLevel()))
-				.append(ChatColorType.NORMAL)
-				.append(" Experience: ")
-				.append(ChatColorType.HIGHLIGHT)
-				.append(String.format("%,d", hiscoreSkill.getExperience()))
-				.append(ChatColorType.NORMAL)
-				.append(" Rank: ")
-				.append(ChatColorType.HIGHLIGHT)
-				.append(String.format("%,d", hiscoreSkill.getRank()))
-				.build();
+				.append(ChatColorType.NORMAL);
+			if (hiscoreSkill.getExperience() != -1)
+			{
+				chatMessageBuilder.append(" Experience: ")
+					.append(ChatColorType.HIGHLIGHT)
+					.append(String.format("%,d", hiscoreSkill.getExperience()))
+					.append(ChatColorType.NORMAL);
+			}
+			if (hiscoreSkill.getRank() != -1)
+			{
+				chatMessageBuilder.append(" Rank: ")
+					.append(ChatColorType.HIGHLIGHT)
+					.append(String.format("%,d", hiscoreSkill.getRank()));
+			}
 
+			final String response = chatMessageBuilder.build();
 			log.debug("Setting response {}", response);
 			final MessageNode messageNode = chatMessage.getMessageNode();
 			messageNode.setRuneLiteFormatMessage(response);
@@ -992,7 +1091,7 @@ public class ChatCommandsPlugin extends Plugin
 		}
 		else
 		{
-			player = sanitize(chatMessage.getName());
+			player = Text.sanitize(chatMessage.getName());
 		}
 
 		try
@@ -1260,7 +1359,7 @@ public class ChatCommandsPlugin extends Plugin
 	private HiscoreLookup getCorrectLookupFor(final ChatMessage chatMessage)
 	{
 		Player localPlayer = client.getLocalPlayer();
-		final String player = sanitize(chatMessage.getName());
+		final String player = Text.sanitize(chatMessage.getName());
 
 		// If we are sending the message then just use the local hiscore endpoint for the world
 		if (chatMessage.getType().equals(ChatMessageType.PRIVATECHATOUT)
@@ -1390,6 +1489,7 @@ public class ChatCommandsPlugin extends Plugin
 				return "Corporeal Beast";
 
 			case "jad":
+			case "tzhaar fight cave":
 				return "TzTok-Jad";
 
 			case "kq":
@@ -1491,6 +1591,7 @@ public class ChatCommandsPlugin extends Plugin
 			case "chambers cm":
 			case "olm cm":
 			case "raids cm":
+			case "chambers of xeric - challenge mode":
 				return "Chambers of Xeric Challenge Mode";
 
 			// tob
@@ -1509,12 +1610,17 @@ public class ChatCommandsPlugin extends Plugin
 			// The Gauntlet
 			case "gaunt":
 			case "gauntlet":
+			case "the gauntlet":
 				return "Gauntlet";
 
 			// Corrupted Gauntlet
 			case "cgaunt":
 			case "cgauntlet":
+			case "the corrupted gauntlet":
 				return "Corrupted Gauntlet";
+
+			case "the nightmare":
+				return "Nightmare";
 
 			default:
 				return WordUtils.capitalize(boss);

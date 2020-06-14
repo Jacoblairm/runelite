@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ObjectArrays;
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -95,13 +94,13 @@ import org.apache.commons.lang3.ArrayUtils;
 @PluginDescriptor(
 	name = "World Hopper",
 	description = "Allows you to quickly hop worlds",
-	tags = {"ping"}
+	tags = {"ping", "switcher"}
 )
 @Slf4j
 public class WorldHopperPlugin extends Plugin
 {
 	private static final int REFRESH_THROTTLE = 60_000; // ms
-	private static final int TICK_THROTTLE = (int) Duration.ofMinutes(10).toMillis();
+	private static final int MAX_PLAYER_COUNT = 1950;
 
 	private static final int DISPLAY_SWITCHER_MAX_ATTEMPTS = 3;
 
@@ -299,7 +298,6 @@ public class WorldHopperPlugin extends Plugin
 	private void clearFavoriteConfig(int world)
 	{
 		configManager.unsetConfiguration(WorldHopperConfig.GROUP, "favorite_" + world);
-		panel.resetAllFavoriteMenus();
 	}
 
 	boolean isFavorite(World world)
@@ -561,6 +559,12 @@ public class WorldHopperPlugin extends Plugin
 
 			world = worlds.get(worldIdx);
 
+			// Check world region if filter is enabled
+			if (config.quickHopRegionFilter() != RegionFilterMode.NONE && world.getRegion() != config.quickHopRegionFilter().getRegion())
+			{
+				continue;
+			}
+
 			EnumSet<WorldType> types = world.getTypes().clone();
 
 			types.remove(WorldType.BOUNTY);
@@ -582,6 +586,12 @@ public class WorldHopperPlugin extends Plugin
 				{
 					log.warn("Failed to parse total level requirement for target world", ex);
 				}
+			}
+
+			// Avoid switching to near-max population worlds, as it will refuse to allow the hop if the world is full
+			if (world.getPlayers() >= MAX_PLAYER_COUNT)
+			{
+				continue;
 			}
 
 			// Break out if we've found a good world to hop to

@@ -70,6 +70,7 @@ import net.runelite.http.api.hiscore.HiscoreSkill;
 import static net.runelite.http.api.hiscore.HiscoreSkill.*;
 import net.runelite.http.api.hiscore.HiscoreSkillType;
 import net.runelite.http.api.hiscore.Skill;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
@@ -113,6 +114,10 @@ public class HiscorePanel extends PluginPanel
 		ZALCANO, ZULRAH
 	);
 
+	private static final HiscoreEndpoint[] ENDPOINTS = new HiscoreEndpoint[] {
+		HiscoreEndpoint.NORMAL, HiscoreEndpoint.IRONMAN, HiscoreEndpoint.HARDCORE_IRONMAN, HiscoreEndpoint.ULTIMATE_IRONMAN, HiscoreEndpoint.DEADMAN, HiscoreEndpoint.TOURNAMENT
+	};
+
 	@Inject
 	ScheduledExecutorService executor;
 
@@ -121,6 +126,7 @@ public class HiscorePanel extends PluginPanel
 	private Client client;
 
 	private final HiscoreConfig config;
+	private final NameAutocompleter nameAutocompleter;
 
 	private final IconTextField searchBar;
 
@@ -141,10 +147,11 @@ public class HiscorePanel extends PluginPanel
 	private boolean loading = false;
 
 	@Inject
-	public HiscorePanel(HiscoreConfig config)
+	public HiscorePanel(HiscoreConfig config, NameAutocompleter nameAutocompleter)
 	{
 		super();
 		this.config = config;
+		this.nameAutocompleter = nameAutocompleter;
 
 		// The layout seems to be ignoring the top margin and only gives it
 		// a 2-3 pixel margin, so I set the value to 18 to compensate
@@ -187,7 +194,7 @@ public class HiscorePanel extends PluginPanel
 
 				if (localPlayer != null)
 				{
-					executor.execute(() -> lookup(localPlayer.getName()));
+					lookup(localPlayer.getName());
 				}
 			}
 		});
@@ -198,7 +205,7 @@ public class HiscorePanel extends PluginPanel
 		tabGroup = new MaterialTabGroup();
 		tabGroup.setLayout(new GridLayout(1, 5, 7, 7));
 
-		for (HiscoreEndpoint endpoint : HiscoreEndpoint.values())
+		for (HiscoreEndpoint endpoint : ENDPOINTS)
 		{
 			final BufferedImage iconImage = ImageUtil.getResourceStreamFromClass(getClass(), endpoint.name().toLowerCase() + ".png");
 
@@ -295,6 +302,13 @@ public class HiscorePanel extends PluginPanel
 
 		add(bossPanel, c);
 		c.gridy++;
+
+		addInputKeyListener(nameAutocompleter);
+	}
+
+	void shutdown()
+	{
+		removeInputKeyListener(nameAutocompleter);
 	}
 
 	@Override
@@ -349,7 +363,7 @@ public class HiscorePanel extends PluginPanel
 	{
 		searchBar.setText(username);
 		resetEndpoints();
-		lookup();
+		executor.execute(this::lookup);
 	}
 
 	private void lookup()
@@ -417,6 +431,8 @@ public class HiscorePanel extends PluginPanel
 		searchBar.setIcon(IconTextField.Icon.SEARCH);
 		searchBar.setEditable(true);
 		loading = false;
+
+		nameAutocompleter.addToSearchHistory(result.getPlayer().toLowerCase());
 
 		for (Map.Entry<HiscoreSkill, JLabel> entry : skillLabels.entrySet())
 		{
@@ -670,7 +686,9 @@ public class HiscorePanel extends PluginPanel
 	private void resetEndpoints()
 	{
 		// Select the correct tab based on the world type.
-		tabGroup.select(tabGroup.getTab(selectWorldEndpoint().ordinal()));
+		HiscoreEndpoint endpoint = selectWorldEndpoint();
+		int idx = ArrayUtils.indexOf(ENDPOINTS, endpoint);
+		tabGroup.select(tabGroup.getTab(idx));
 	}
 
 	private HiscoreEndpoint selectWorldEndpoint()
@@ -679,7 +697,11 @@ public class HiscorePanel extends PluginPanel
 		{
 			EnumSet<WorldType> wTypes = client.getWorldType();
 
-			if (wTypes.contains(WorldType.DEADMAN))
+			if (wTypes.contains(WorldType.DEADMAN_TOURNAMENT))
+			{
+				return HiscoreEndpoint.TOURNAMENT;
+			}
+			else if (wTypes.contains(WorldType.DEADMAN))
 			{
 				return HiscoreEndpoint.DEADMAN;
 			}
