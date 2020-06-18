@@ -205,13 +205,13 @@ public class BASPlugin extends Plugin implements KeyListener
 	}
 
 	@Subscribe
-	public void onClanMemberJoined(FriendsChatMemberJoined event)
+	public void onFriendsChatMemberJoined(FriendsChatMemberJoined event)
 	{
 		ccUpdate();
 	}
 
 	@Subscribe
-	public void onClanMemberLeft(FriendsChatMemberLeft event)
+	public void onFriendsChatMemberLeft(FriendsChatMemberLeft event)
 	{
 		ccUpdate();
 	}
