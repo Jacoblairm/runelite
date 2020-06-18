@@ -381,7 +381,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	{
 		FriendsChatManager clanMemberManager = client.getFriendsChatManager();
 
-		if(client.getLocalPlayer().getName()==null || clanMemberManager == null|| clanMemberManager.getCount()<1 || !clanMemberManager.getClanOwner().equals(ccName) || !isUpdated)
+		if(client.getLocalPlayer().getName()==null || clanMemberManager == null|| clanMemberManager.getCount()<1 || !clanMemberManager.getOwner().equals(ccName) || !isUpdated)
 		{
 			return false;
 		}
