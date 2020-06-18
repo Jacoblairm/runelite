@@ -49,11 +49,11 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
-import net.runelite.api.ClanMemberManager;
-import net.runelite.api.ClanMemberRank;
+import net.runelite.api.FriendsChatManager;
+import net.runelite.api.FriendsChatRank;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.ClanMemberJoined;
-import net.runelite.api.events.ClanMemberLeft;
+import net.runelite.api.events.FriendsChatMemberJoined;
+import net.runelite.api.events.FriendsChatMemberLeft;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.MenuAction;
@@ -67,11 +67,11 @@ import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.game.ClanManager;
+import net.runelite.client.game.FriendChatManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.api.ClanMember;
+import net.runelite.api.FriendsChatMember;
 import org.apache.commons.lang3.ArrayUtils;
 
 @Slf4j
@@ -141,7 +141,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	private ConfigManager configManager;
 
 	@Inject
-	private ClanManager clanManager;
+	private FriendChatManager clanManager;
 
 	@Inject
 	private ChatMessageManager chatMessageManager;
@@ -186,7 +186,7 @@ public class BASPlugin extends Plugin implements KeyListener
 			return;
 		}
 
-		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+		FriendsChatManager clanMemberManager = client.getFriendsChatManager();
 
 		updateCCPanel();
 		if(clanMemberManager != null && clanMemberManager.getCount()>0 && ccCount!=clanMemberManager.getCount())
@@ -196,7 +196,7 @@ public class BASPlugin extends Plugin implements KeyListener
 		}
 		if(config.getNextCustomer())
 		{
-			Widget clanSetupWidget = client.getWidget(WidgetID.CLAN_CHAT_GROUP_ID, clanSetupWidgetID);
+			Widget clanSetupWidget = client.getWidget(WidgetID.FRIENDS_CHAT_GROUP_ID, clanSetupWidgetID);
 			if(clanSetupWidget!=null)
 			{
 				clanSetupWidget.setText("Next Customer");
@@ -206,13 +206,13 @@ public class BASPlugin extends Plugin implements KeyListener
 	}
 
 	@Subscribe
-	public void onClanMemberJoined(ClanMemberJoined event)
+	public void onClanMemberJoined(FriendsChatMemberJoined event)
 	{
 		ccUpdate();
 	}
 
 	@Subscribe
-	public void onClanMemberLeft(ClanMemberLeft event)
+	public void onClanMemberLeft(FriendsChatMemberLeft event)
 	{
 		ccUpdate();
 	}
@@ -225,16 +225,16 @@ public class BASPlugin extends Plugin implements KeyListener
 			return;
 		}
 
-		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+		FriendsChatManager clanMemberManager = client.getFriendsChatManager();
 
 		int groupId = WidgetInfo.TO_GROUP(event.getActionParam1());
 		String option = event.getOption();
 
-		if (groupId == WidgetInfo.CLAN_CHAT.getGroupId() ||
+		if (groupId == WidgetInfo.FRIENDS_CHAT.getGroupId() ||
 				groupId == WidgetInfo.CHATBOX.getGroupId() && !KICK_OPTION.equals(option)//prevent from adding for Kick option (interferes with the raiding party one)
 		)
 		{
-			if(config.getNextCustomer() && groupId == WidgetInfo.CLAN_CHAT.getGroupId() && WidgetInfo.TO_CHILD(event.getActionParam1())==clanSetupWidgetID && clanMemberManager != null && clanMemberManager.getClanOwner().equals(ccName))
+			if(config.getNextCustomer() && groupId == WidgetInfo.FRIENDS_CHAT.getGroupId() && WidgetInfo.TO_CHILD(event.getActionParam1())==clanSetupWidgetID && clanMemberManager != null && clanMemberManager.getOwner().equals(ccName))
 			{
 				MenuEntry newMenu = client.getMenuEntries()[1];
 				newMenu.setOption("Next-customer");
@@ -379,7 +379,7 @@ public class BASPlugin extends Plugin implements KeyListener
 
 	private boolean isRank()
 	{
-		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+		FriendsChatManager clanMemberManager = client.getFriendsChatManager();
 
 		if(client.getLocalPlayer().getName()==null || clanMemberManager == null|| clanMemberManager.getCount()<1 || !clanMemberManager.getClanOwner().equals(ccName) || !isUpdated)
 		{
@@ -388,7 +388,7 @@ public class BASPlugin extends Plugin implements KeyListener
 
 		boolean isRank = false;
 
-		for(ClanMember member : clanMemberManager.getMembers())
+		for(FriendsChatMember member : clanMemberManager.getMembers())
 		{
 			if(Text.sanitize(client.getLocalPlayer().getName()).equals(Text.sanitize(member.getName())) && member.getRank().getValue()>=0)
 			{
@@ -578,14 +578,14 @@ public class BASPlugin extends Plugin implements KeyListener
 
 	private void checkUsers()
 	{
-		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+		FriendsChatManager clanMemberManager = client.getFriendsChatManager();
 
 		if (clanMemberManager == null)
 		{
 			return;
 		}
 
-		for (ClanMember memberCM : clanMemberManager.getMembers())
+		for (FriendsChatMember memberCM : clanMemberManager.getMembers())
 		{
 			String member = memberCM.getName();
 
@@ -620,7 +620,7 @@ public class BASPlugin extends Plugin implements KeyListener
 		for (String premMember : ccPremList)
 		{
 			boolean isOnline = false;
-			for (ClanMember memberCM : clanMemberManager.getMembers())
+			for (FriendsChatMember memberCM : clanMemberManager.getMembers())
 			{
 				String member = memberCM.getName();
 				if (premMember.equals(member))
@@ -650,13 +650,13 @@ public class BASPlugin extends Plugin implements KeyListener
 
 	private void updateCCPanel()
 	{
-		Widget clanChatWidget = client.getWidget(WidgetInfo.CLAN_CHAT);
-		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+		Widget clanChatWidget = client.getWidget(WidgetInfo.FRIENDS_CHAT);
+		FriendsChatManager clanMemberManager = client.getFriendsChatManager();
 
 		if (clanChatWidget != null && !clanChatWidget.isHidden())
 		{
-			Widget clanChatList = client.getWidget(WidgetInfo.CLAN_CHAT_LIST);
-			Widget owner = client.getWidget(WidgetInfo.CLAN_CHAT_OWNER);
+			Widget clanChatList = client.getWidget(WidgetInfo.FRIENDS_CHAT_LIST);
+			Widget owner = client.getWidget(WidgetInfo.FRIENDS_CHAT_OWNER);
 			if (clanMemberManager != null && clanMemberManager.getCount() > 0 && owner.getText().equals("<col=ffffff>Ba Services</col>"))
 			{
 				membersWidgets = clanChatList.getDynamicChildren();
@@ -751,7 +751,7 @@ public class BASPlugin extends Plugin implements KeyListener
 
 	private void updateQueue()
 	{
-		ClanMemberManager clanMemberManager = client.getClanMemberManager();
+		FriendsChatManager clanMemberManager = client.getFriendsChatManager();
 
 		if(!config.autoUpdateQueue()||clanMemberManager == null)
 		{
@@ -759,7 +759,7 @@ public class BASPlugin extends Plugin implements KeyListener
 		}
 
 		String csv = "";
-		for (ClanMember member : clanMemberManager.getMembers())
+		for (FriendsChatMember member : clanMemberManager.getMembers())
 		{
 			String memberName = member.getName();
 			if (csv.equals(""))
@@ -906,7 +906,7 @@ public class BASPlugin extends Plugin implements KeyListener
 			return;
 		}
 
-		final ClanMemberRank rank = clanManager.getRank(chatMessage.getName());
+		final FriendsChatRank rank = clanManager.getRank(chatMessage.getName());
 
 		OkHttpClient httpClient = RuneLiteAPI.CLIENT;
 		HttpUrl httpUrl = new HttpUrl.Builder()
