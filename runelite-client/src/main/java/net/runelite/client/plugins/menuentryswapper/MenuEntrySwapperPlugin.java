@@ -47,6 +47,7 @@ import net.runelite.api.events.MenuOpened;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.PostItemComposition;
 import net.runelite.api.events.WidgetMenuOptionClicked;
+import net.runelite.api.widgets.WidgetID;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -103,6 +104,14 @@ public class MenuEntrySwapperPlugin extends Plugin
 		MenuAction.NPC_FOURTH_OPTION,
 		MenuAction.NPC_FIFTH_OPTION,
 		MenuAction.EXAMINE_NPC);
+
+	private static final Set<String> ESSENCE_MINE_NPCS = ImmutableSet.of(
+		"aubury",
+		"wizard sedridor",
+		"wizard distentor",
+		"wizard cromperty",
+		"brimstail"
+	);
 
 	@Inject
 	private Client client;
@@ -308,14 +317,15 @@ public class MenuEntrySwapperPlugin extends Plugin
 		// is what builds the context menu row which is what the eventual click will use
 
 		// Swap to shift-click deposit behavior
-		// Deposit- op 2 is the current withdraw amount 1/5/10/x
+		// Deposit- op 1 is the current withdraw amount 1/5/10/x for deposit box interface
+		// Deposit- op 2 is the current withdraw amount 1/5/10/x for bank interface
 		if (shiftModifier && config.bankDepositShiftClick() != ShiftDepositMode.OFF
-			&& menuEntryAdded.getType() == MenuAction.CC_OP.getId() && menuEntryAdded.getIdentifier() == 2
+			&& menuEntryAdded.getType() == MenuAction.CC_OP.getId() && (menuEntryAdded.getIdentifier() == 2 || menuEntryAdded.getIdentifier() == 1)
 			&& menuEntryAdded.getOption().startsWith("Deposit-"))
 		{
 			ShiftDepositMode shiftDepositMode = config.bankDepositShiftClick();
-			final int actionId = shiftDepositMode.getMenuAction().getId();
-			final int opId = shiftDepositMode.getIdentifier();
+			final int opId = WidgetInfo.TO_GROUP(menuEntryAdded.getActionParam1()) == WidgetID.DEPOSIT_BOX_GROUP_ID ? shiftDepositMode.getIdentifierDepositBox() : shiftDepositMode.getIdentifier();
+			final int actionId = opId >= 6 ? MenuAction.CC_OP_LOW_PRIORITY.getId() : MenuAction.CC_OP.getId();
 			bankModeSwap(actionId, opId);
 		}
 
@@ -432,7 +442,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 				swap("teleport", option, target, index);
 			}
 
-			if (config.swapHardWoodGrove() && target.contains("rionasta"))
+			if (config.swapHardWoodGroveParcel() && target.contains("rionasta"))
 			{
 				swap("send-parcel", option, target, index);
 			}
@@ -460,6 +470,11 @@ public class MenuEntrySwapperPlugin extends Plugin
 			if (config.swapHelp())
 			{
 				swap("help", option, target, index);
+			}
+
+			if (config.swapNets())
+			{
+				swap("nets", option, target, index);
 			}
 
 			if (config.swapDarkMage())
@@ -523,6 +538,11 @@ public class MenuEntrySwapperPlugin extends Plugin
 			if (config.swapStartMinigame())
 			{
 				swap("start-minigame", option, target, index);
+			}
+
+			if (config.swapEssenceMineTeleport() && ESSENCE_MINE_NPCS.contains(target))
+			{
+				swap("teleport", option, target, index);
 			}
 		}
 		else if (config.swapQuickLeave() && option.equals("leave tomb") && target.equals("tomb door"))
@@ -616,6 +636,10 @@ public class MenuEntrySwapperPlugin extends Plugin
 		{
 			swap("empty", option, target, index);
 		}
+		else if (config.swapGauntlet() && option.equals("enter") && target.equals("the gauntlet"))
+		{
+			swap("enter-corrupted", option, target, index);
+		}
 		else if (config.swapQuick() && option.equals("enter"))
 		{
 			swap("quick-enter", option, target, index);
@@ -708,6 +732,18 @@ public class MenuEntrySwapperPlugin extends Plugin
 			swap("watson", option, target, index);
 			swap("barbarian guard", option, target, index);
 			swap("random", option, target, index);
+		}
+		else if (shiftModifier && option.equals("value"))
+		{
+			if (config.shopBuy() != null && config.shopBuy() != BuyMode.OFF)
+			{
+				swap(config.shopBuy().getOption(), option, target, index);
+			}
+
+			if (config.shopSell() != null && config.shopSell() != SellMode.OFF)
+			{
+				swap(config.shopSell().getOption(), option, target, index);
+			}
 		}
 		else if (config.shiftClickCustomization() && shiftModifier && !option.equals("use"))
 		{

@@ -34,6 +34,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import javax.inject.Singleton;
+import lombok.AllArgsConstructor;
 import net.runelite.api.Client;
 import net.runelite.api.hooks.Callbacks;
 import net.runelite.client.account.SessionManager;
@@ -52,26 +53,25 @@ import net.runelite.client.util.ExecutorServiceExceptionLogger;
 import net.runelite.http.api.RuneLiteAPI;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@AllArgsConstructor
 public class RuneLiteModule extends AbstractModule
 {
 	private static final int MAX_OKHTTP_CACHE_SIZE = 20 * 1024 * 1024; // 20mb
 
 	private final Supplier<Applet> clientLoader;
 	private final boolean developerMode;
-
-	public RuneLiteModule(Supplier<Applet> clientLoader, boolean developerMode)
-	{
-		this.clientLoader = clientLoader;
-		this.developerMode = developerMode;
-	}
+	private final boolean safeMode;
+	private final File sessionfile;
+	private final File config;
 
 	@Override
 	protected void configure()
 	{
 		bindConstant().annotatedWith(Names.named("developerMode")).to(developerMode);
+		bindConstant().annotatedWith(Names.named("safeMode")).to(safeMode);
+		bind(File.class).annotatedWith(Names.named("sessionfile")).toInstance(sessionfile);
+		bind(File.class).annotatedWith(Names.named("config")).toInstance(config);
 		bind(ScheduledExecutorService.class).toInstance(new ExecutorServiceExceptionLogger(Executors.newSingleThreadScheduledExecutor()));
 		bind(OkHttpClient.class).toInstance(RuneLiteAPI.CLIENT.newBuilder()
 			.cache(new Cache(new File(RuneLite.CACHE_DIR, "okhttp"), MAX_OKHTTP_CACHE_SIZE))
@@ -91,10 +91,6 @@ public class RuneLiteModule extends AbstractModule
 		bind(EventBus.class)
 			.annotatedWith(Names.named("Deferred EventBus"))
 			.to(DeferredEventBus.class);
-
-		bind(Logger.class)
-			.annotatedWith(Names.named("Core Logger"))
-			.toInstance(LoggerFactory.getLogger(RuneLite.class));
 	}
 
 	@Provides
