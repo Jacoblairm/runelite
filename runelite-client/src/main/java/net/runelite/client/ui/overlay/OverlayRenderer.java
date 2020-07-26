@@ -46,7 +46,6 @@ import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.events.BeforeRender;
 import net.runelite.api.events.ClientTick;
@@ -125,8 +124,12 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 	{
 		if (!event.isFocused())
 		{
-			inOverlayManagingMode = false;
-			resetOverlayManagementMode();
+			if (inOverlayManagingMode)
+			{
+				inOverlayManagingMode = false;
+				resetOverlayManagementMode();
+			}
+
 			inMenuEntryMode = false;
 			menuEntries = null;
 		}
@@ -457,53 +460,83 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 
 		if (inOverlayResizingMode)
 		{
-			final Rectangle r = currentManagedBounds;
+			final int left = p.x - currentManagedBounds.x; // Distance (in pixels) from the left edge of the bounds
+			final int top = p.y - currentManagedBounds.y;  // Distance (in pixels) from the top edge of the bounds
+			final int originalX = currentManagedBounds.x;
+			final int originalY = currentManagedBounds.y;
+			int x = originalX;
+			int y = originalY;
+			int width = currentManagedBounds.width;
+			int height = currentManagedBounds.height;
 
-			final int dx = p.x - r.x;
-			final int dy = p.y - r.y;
 			switch (clientUI.getCurrentCursor().getType())
 			{
 				case Cursor.N_RESIZE_CURSOR:
-					int height = r.height - dy;
-					r.setRect(r.x, r.y + dy, r.width, height);
+					y += top;
+					height -= top;
 					break;
 				case Cursor.NW_RESIZE_CURSOR:
-					int width = r.width - dx;
-					height = r.height - dy;
-					r.setRect(r.x + dx, r.y + dy, width, height);
+					x += left;
+					y += top;
+					width -= left;
+					height -= top;
 					break;
 				case Cursor.W_RESIZE_CURSOR:
-					width = r.width - dx;
-					r.setRect(r.x + dx, r.y, width, r.height);
+					x += left;
+					width -= left;
 					break;
 				case Cursor.SW_RESIZE_CURSOR:
-					width = r.width - dx;
-					height = dy;
-					r.setRect(r.x + dx, r.y, width, height);
+					x += left;
+					width -= left;
+					height = top;
 					break;
 				case Cursor.S_RESIZE_CURSOR:
-					height = dy;
-					r.setRect(r.x, r.y, r.width, height);
+					height = top;
 					break;
 				case Cursor.SE_RESIZE_CURSOR:
-					width = dx;
-					height = dy;
-					r.setRect(r.x, r.y, width, height);
+					width = left;
+					height = top;
 					break;
 				case Cursor.E_RESIZE_CURSOR:
-					width = dx;
-					r.setRect(r.x, r.y, width, r.height);
+					width = left;
 					break;
 				case Cursor.NE_RESIZE_CURSOR:
-					width = dx;
-					height = r.height - dy;
-					r.setRect(r.x, r.y + dy, width, height);
+					y += top;
+					width = left;
+					height -= top;
 					break;
 				default:
 					// center
 			}
 
-			currentManagedOverlay.setPreferredSize(new Dimension(Math.max(MIN_OVERLAY_SIZE, currentManagedBounds.width), Math.max(MIN_OVERLAY_SIZE, currentManagedBounds.height)));
+			final int widthOverflow = Math.max(0, MIN_OVERLAY_SIZE - width);
+			final int heightOverflow = Math.max(0, MIN_OVERLAY_SIZE - height);
+			final int dx = x - originalX;
+			final int dy = y - originalY;
+
+			// If this resize operation would cause the dimensions to go below the minimum width/height, reset the
+			// dimensions and adjust the x/y position accordingly as needed
+			if (widthOverflow > 0)
+			{
+				width = MIN_OVERLAY_SIZE;
+
+				if (dx > 0)
+				{
+					x -= widthOverflow;
+				}
+			}
+			if (heightOverflow > 0)
+			{
+				height = MIN_OVERLAY_SIZE;
+
+				if (dy > 0)
+				{
+					y -= heightOverflow;
+				}
+			}
+
+			currentManagedBounds.setRect(x, y, width, height);
+			currentManagedOverlay.setPreferredSize(new Dimension(currentManagedBounds.width, currentManagedBounds.height));
 
 			if (currentManagedOverlay.getPreferredLocation() != null)
 			{
@@ -597,7 +630,7 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 	@Override
 	public void keyReleased(KeyEvent e)
 	{
-		if (!e.isAltDown())
+		if (!e.isAltDown() && inOverlayManagingMode)
 		{
 			inOverlayManagingMode = false;
 			resetOverlayManagementMode();
@@ -792,6 +825,11 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 	private MenuEntry[] createRightClickMenuEntries(Overlay overlay)
 	{
 		List<OverlayMenuEntry> menuEntries = overlay.getMenuEntries();
+		if (menuEntries.isEmpty())
+		{
+			return null;
+		}
+
 		final MenuEntry[] entries = new MenuEntry[menuEntries.size()];
 
 		// Add in reverse order so they display correctly in the right-click menu
@@ -802,7 +840,7 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 			final MenuEntry entry = new MenuEntry();
 			entry.setOption(overlayMenuEntry.getOption());
 			entry.setTarget(ColorUtil.wrapWithColorTag(overlayMenuEntry.getTarget(), JagexColors.MENU_TARGET));
-			entry.setType(MenuAction.RUNELITE_OVERLAY.getId());
+			entry.setType(overlayMenuEntry.getMenuAction().getId());
 			entry.setIdentifier(overlayManager.getOverlays().indexOf(overlay)); // overlay id
 
 			entries[i] = entry;
