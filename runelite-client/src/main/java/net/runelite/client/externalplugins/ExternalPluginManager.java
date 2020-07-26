@@ -47,6 +47,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
 import net.runelite.client.RuneLiteProperties;
@@ -204,12 +207,37 @@ public class ExternalPluginManager
 				int toDownload = needsDownload.stream().mapToInt(ExternalPluginManifest::getSize).sum();
 				int downloaded = 0;
 
+				HttpUrl manifestBase;
+
+				HttpUrl bootstrapURL = new HttpUrl.Builder()
+						.scheme("https")
+						.host("static.runelite.net")
+						.addPathSegment("bootstrap.json")
+						.build();
+
+				try (Response res = okHttpClient.newCall(new Request.Builder().url(bootstrapURL).build()).execute())
+				{
+					if (res.code() != 200)
+					{
+						throw new IOException("Non-OK response code: " + res.code());
+					}
+
+					String jsonData = res.body().string();
+
+					JsonObject jsonObject = (new JsonParser()).parse(jsonData).getAsJsonObject();
+					String validManifestVersion = jsonObject.get("client").getAsJsonObject().get("version").toString().replace("\"", "") + "";
+					//log.info("Manifest url: https://repo.runelite.net/plugins/"+ validManifestVersion+"/");
+
+					manifestBase = new HttpUrl.Builder().scheme("https").host("repo.runelite.net").addPathSegment("plugins").addPathSegment(validManifestVersion).build();
+				}
+
 				for (ExternalPluginManifest manifest : needsDownload)
 				{
-					HttpUrl url = RuneLiteProperties.getPluginHubBase().newBuilder()
+					HttpUrl url = manifestBase.newBuilder()
 						.addPathSegment(manifest.getInternalName())
 						.addPathSegment(manifest.getCommit() + ".jar")
 						.build();
+					log.info(RuneLiteProperties.getPluginHubBase().toString());
 
 					try (Response res = okHttpClient.newCall(new Request.Builder().url(url).build()).execute())
 					{

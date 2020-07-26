@@ -83,9 +83,7 @@ public class ExternalPluginClient
 			String validManifestVersion = jsonObject.get("client").getAsJsonObject().get("version").toString().replace("\"", "") + "";
 			//log.info("Manifest url: https://repo.runelite.net/plugins/"+ validManifestVersion+"/");
 
-
 			manifest = new HttpUrl.Builder().scheme("https").host("repo.runelite.net").addPathSegment("plugins").addPathSegment(validManifestVersion).addPathSegment("manifest.js").build();
-
 		}
 
 		try (Response res = cachingClient.newCall(new Request.Builder().url(manifest).build()).execute())
