@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Adam <Adam@sigterm.info>
+ * Copyright (c) 2020, Adam <Adam@sigterm.info>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,64 +22,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.gpu;
+package net.runelite.client.ui;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
-class GpuIntBuffer
+public class ContainableFrameTest
 {
-	private IntBuffer buffer = allocateDirect(65536);
-
-	void put(int x, int y, int z)
+	@Test
+	public void testJdk8231564()
 	{
-		buffer.put(x).put(y).put(z);
-	}
-
-	void put(int x, int y, int z, int c)
-	{
-		buffer.put(x).put(y).put(z).put(c);
-	}
-
-	void flip()
-	{
-		buffer.flip();
-	}
-
-	void clear()
-	{
-		buffer.clear();
-	}
-
-	void ensureCapacity(int size)
-	{
-		int capacity = buffer.capacity();
-		final int position = buffer.position();
-		if ((capacity - position) < size)
-		{
-			do
-			{
-				capacity *= 2;
-			}
-			while ((capacity - position) < size);
-
-			IntBuffer newB = allocateDirect(capacity);
-			buffer.flip();
-			newB.put(buffer);
-			buffer = newB;
-		}
-	}
-
-	IntBuffer getBuffer()
-	{
-		return buffer;
-	}
-
-	static IntBuffer allocateDirect(int size)
-	{
-		return ByteBuffer.allocateDirect(size * Integer.BYTES)
-			.order(ByteOrder.nativeOrder())
-			.asIntBuffer();
+		assertTrue(ContainableFrame.jdk8231564("11.0.8"));
+		assertFalse(ContainableFrame.jdk8231564("11.0.7"));
+		assertFalse(ContainableFrame.jdk8231564("1.8.0_261"));
 	}
 }
