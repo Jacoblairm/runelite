@@ -39,25 +39,30 @@ import java.security.cert.CertificateFactory;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLiteProperties;
-import net.runelite.http.api.RuneLiteAPI;
 import net.runelite.client.util.VerificationException;
+import net.runelite.http.api.RuneLiteAPI;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okio.BufferedSource;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+@Slf4j
 public class ExternalPluginClient
 {
-	private final OkHttpClient cachingClient;
+	private final OkHttpClient okHttpClient;
 
 	@Inject
-	public ExternalPluginClient(OkHttpClient cachingClient)
+	private ExternalPluginClient(OkHttpClient okHttpClient)
 	{
-		this.cachingClient = cachingClient;
+		this.okHttpClient = okHttpClient;
 	}
 
 	public List<ExternalPluginManifest> downloadManifest() throws IOException, VerificationException
@@ -70,7 +75,7 @@ public class ExternalPluginClient
 				.addPathSegment("bootstrap.json")
 				.build();
 
-		try (Response res = cachingClient.newCall(new Request.Builder().url(bootstrapURL).build()).execute())
+		try (Response res = okHttpClient.newCall(new Request.Builder().url(bootstrapURL).build()).execute())
 		{
 			if (res.code() != 200)
 			{
@@ -88,7 +93,7 @@ public class ExternalPluginClient
 
 		}
 
-		try (Response res = cachingClient.newCall(new Request.Builder().url(manifest).build()).execute())
+		try (Response res = okHttpClient.newCall(new Request.Builder().url(manifest).build()).execute())
 		{
 			if (res.code() != 200)
 			{
@@ -134,7 +139,7 @@ public class ExternalPluginClient
 			.addPathSegment(plugin.getCommit() + ".png")
 			.build();
 
-		try (Response res = cachingClient.newCall(new Request.Builder().url(url).build()).execute())
+		try (Response res = okHttpClient.newCall(new Request.Builder().url(url).build()).execute())
 		{
 			byte[] bytes = res.body().bytes();
 			// We don't stream so the lock doesn't block the edt trying to load something at the same time
@@ -157,5 +162,38 @@ public class ExternalPluginClient
 		{
 			throw new RuntimeException(e);
 		}
+	}
+
+	void submitPlugins(List<String> plugins)
+	{
+		if (plugins.isEmpty())
+		{
+			return;
+		}
+
+		HttpUrl url = RuneLiteAPI.getApiBase().newBuilder()
+			.addPathSegment("pluginhub")
+			.build();
+
+		Request request = new Request.Builder()
+			.url(url)
+			.post(RequestBody.create(RuneLiteAPI.JSON, RuneLiteAPI.GSON.toJson(plugins)))
+			.build();
+
+		okHttpClient.newCall(request).enqueue(new Callback()
+		{
+			@Override
+			public void onFailure(Call call, IOException e)
+			{
+				log.debug("Error submitting plugins", e);
+			}
+
+			@Override
+			public void onResponse(Call call, Response response)
+			{
+				log.debug("Submitted plugin list");
+				response.close();
+			}
+		});
 	}
 }
