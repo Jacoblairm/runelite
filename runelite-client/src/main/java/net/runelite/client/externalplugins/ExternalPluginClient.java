@@ -51,6 +51,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okio.BufferedSource;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 @Slf4j
 public class ExternalPluginClient
@@ -65,10 +67,32 @@ public class ExternalPluginClient
 
 	public List<ExternalPluginManifest> downloadManifest() throws IOException, VerificationException
 	{
-		HttpUrl manifest = RuneLiteProperties.getPluginHubBase()
-			.newBuilder()
-			.addPathSegments("manifest.js")
-			.build();
+		HttpUrl manifest;
+
+		HttpUrl bootstrapURL = new HttpUrl.Builder()
+				.scheme("https")
+				.host("static.runelite.net")
+				.addPathSegment("bootstrap.json")
+				.build();
+
+		try (Response res = okHttpClient.newCall(new Request.Builder().url(bootstrapURL).build()).execute())
+		{
+			if (res.code() != 200)
+			{
+				throw new IOException("Non-OK response code: " + res.code());
+			}
+
+			String jsonData = res.body().string();
+
+			JsonObject jsonObject = (new JsonParser()).parse(jsonData).getAsJsonObject();
+			String validManifestVersion = jsonObject.get("client").getAsJsonObject().get("version").toString().replace("\"", "") + "";
+			//log.info("Manifest url: https://repo.runelite.net/plugins/"+ validManifestVersion+"/");
+
+
+			manifest = new HttpUrl.Builder().scheme("https").host("repo.runelite.net").addPathSegment("plugins").addPathSegment(validManifestVersion).addPathSegment("manifest.js").build();
+
+		}
+
 		try (Response res = okHttpClient.newCall(new Request.Builder().url(manifest).build()).execute())
 		{
 			if (res.code() != 200)
