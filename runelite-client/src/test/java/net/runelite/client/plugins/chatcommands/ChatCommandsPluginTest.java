@@ -24,12 +24,12 @@
  */
 package net.runelite.client.plugins.chatcommands;
 
+import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.testing.fieldbinder.Bind;
 import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.BiConsumer;
 import javax.inject.Inject;
 import net.runelite.api.ChatMessageType;
 import static net.runelite.api.ChatMessageType.FRIENDSCHATNOTIFICATION;
@@ -54,7 +54,7 @@ import net.runelite.http.api.hiscore.HiscoreClient;
 import net.runelite.http.api.hiscore.HiscoreSkill;
 import net.runelite.http.api.hiscore.SingleHiscoreSkillResult;
 import net.runelite.http.api.hiscore.Skill;
-import org.junit.After;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,6 +64,7 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -120,15 +121,28 @@ public class ChatCommandsPluginTest
 	{
 		Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
 
-		when(client.getUsername()).thenReturn(PLAYER_NAME);
+		Player player = mock(Player.class);
+		when(player.getName()).thenReturn(PLAYER_NAME);
+		when(client.getLocalPlayer()).thenReturn(player);
 
-		chatCommandsPlugin.startUp();
+		when(client.getUsername()).thenReturn(PLAYER_NAME);
 	}
 
-	@After
-	public void after()
+	@Test
+	public void testStartupShutdown()
 	{
+		chatCommandsPlugin.startUp();
 		chatCommandsPlugin.shutDown();
+
+		ArgumentCaptor<String> registerCaptor = ArgumentCaptor.forClass(String.class);
+		verify(chatCommandManager, atLeastOnce()).registerCommand(registerCaptor.capture(), any());
+		verify(chatCommandManager, atLeastOnce()).registerCommandAsync(registerCaptor.capture(), any());
+		verify(chatCommandManager, atLeastOnce()).registerCommandAsync(registerCaptor.capture(), any(), any());
+
+		ArgumentCaptor<String> unregisterCaptor = ArgumentCaptor.forClass(String.class);
+		verify(chatCommandManager, atLeastOnce()).unregisterCommand(unregisterCaptor.capture());
+
+		assertEquals(Sets.newHashSet(registerCaptor.getAllValues()), Sets.newHashSet(unregisterCaptor.getAllValues()));
 	}
 
 	@Test
@@ -420,7 +434,7 @@ public class ChatCommandsPluginTest
 	{
 		when(configManager.getConfiguration("personalbest.adam", "chambers of xeric", int.class)).thenReturn(25 * 60 + 14);
 
-		ChatMessage chatMessage = new ChatMessage(null, FRIENDSCHATNOTIFICATION, "", "<col=ef20ff>Congratulations - your raid is complete!</col><br>Team size: <col=ff0000>3 players</col> Duration:</col> <col=ff0000>23:25</col> Personal best: </col><col=ff0000>20:19</col>", null, 0);
+		ChatMessage chatMessage = new ChatMessage(null, FRIENDSCHATNOTIFICATION, "", "<col=ef20ff>Congratulations - your raid is complete!</col><br>Team size: <col=ff0000>11-15 players</col> Duration:</col> <col=ff0000>23:25</col> Personal best: </col><col=ff0000>20:19</col>", null, 0);
 		chatCommandsPlugin.onChatMessage(chatMessage);
 
 		chatMessage = new ChatMessage(null, GAMEMESSAGE, "", "Your completed Chambers of Xeric count is: <col=ff0000>52</col>.", null, 0);
@@ -448,10 +462,6 @@ public class ChatCommandsPluginTest
 	@Test
 	public void testAdventureLogCountersPage()
 	{
-		Player player = mock(Player.class);
-		when(player.getName()).thenReturn(PLAYER_NAME);
-		when(client.getLocalPlayer()).thenReturn(player);
-
 		Widget advLogWidget = mock(Widget.class);
 		Widget advLogExploitsTextWidget = mock(Widget.class);
 		when(advLogWidget.getChild(ChatCommandsPlugin.ADV_LOG_EXPLOITS_TEXT_INDEX)).thenReturn(advLogExploitsTextWidget);
@@ -505,10 +515,6 @@ public class ChatCommandsPluginTest
 	@Test
 	public void testAdventurerLogCountersPage2()
 	{
-		Player player = mock(Player.class);
-		when(player.getName()).thenReturn(PLAYER_NAME);
-		when(client.getLocalPlayer()).thenReturn(player);
-
 		Widget advLogWidget = mock(Widget.class);
 		Widget advLogExploitsTextWidget = mock(Widget.class);
 		when(advLogWidget.getChild(ChatCommandsPlugin.ADV_LOG_EXPLOITS_TEXT_INDEX)).thenReturn(advLogExploitsTextWidget);
@@ -559,10 +565,6 @@ public class ChatCommandsPluginTest
 	@Test
 	public void testNotYourAdventureLogCountersPage()
 	{
-		Player player = mock(Player.class);
-		when(player.getName()).thenReturn(PLAYER_NAME);
-		when(client.getLocalPlayer()).thenReturn(player);
-
 		Widget advLogWidget = mock(Widget.class);
 		Widget advLogExploitsTextWidget = mock(Widget.class);
 		when(advLogWidget.getChild(ChatCommandsPlugin.ADV_LOG_EXPLOITS_TEXT_INDEX)).thenReturn(advLogExploitsTextWidget);
@@ -585,14 +587,7 @@ public class ChatCommandsPluginTest
 	@Test
 	public void testPlayerSkillLookup() throws IOException
 	{
-		Player player = mock(Player.class);
-		when(player.getName()).thenReturn(PLAYER_NAME);
-		when(client.getLocalPlayer()).thenReturn(player);
-
 		when(chatCommandsConfig.lvl()).thenReturn(true);
-		ArgumentCaptor<BiConsumer<ChatMessage, String>> captor = ArgumentCaptor.forClass(BiConsumer.class);
-		verify(chatCommandManager).registerCommandAsync(eq("!lvl"), captor.capture());
-		BiConsumer<ChatMessage, String> value = captor.getValue();
 
 		SingleHiscoreSkillResult skillResult = new SingleHiscoreSkillResult();
 		skillResult.setPlayer(PLAYER_NAME);
@@ -606,7 +601,7 @@ public class ChatCommandsPluginTest
 		chatMessage.setType(ChatMessageType.PUBLICCHAT);
 		chatMessage.setName(PLAYER_NAME);
 		chatMessage.setMessageNode(messageNode);
-		value.accept(chatMessage, "!lvl zulrah");
+		chatCommandsPlugin.playerSkillLookup(chatMessage, "!lvl zulrah");
 
 		verify(messageNode).setRuneLiteFormatMessage("<colNORMAL>Level <colHIGHLIGHT>Zulrah: 1000<colNORMAL> Rank: <colHIGHLIGHT>10");
 	}

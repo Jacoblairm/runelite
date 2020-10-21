@@ -156,6 +156,9 @@ public class WidgetID
 	public static final int HALLOWED_SEPULCHRE_TIMER_GROUP_ID = 668;
 	public static final int BANK_PIN_GROUP_ID = 213;
 	public static final int HEALTH_OVERLAY_BAR_GROUP_ID = 303;
+	public static final int CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE_GROUP_ID = 271;
+	public static final int CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED_GROUP_ID = 550;
+	public static final int CHAMBERS_OF_XERIC_STORAGE_UNIT_INVENTORY_GROUP_ID = 551;
 
 	static class WorldMap
 	{
@@ -790,10 +793,10 @@ public class WidgetID
 	static class Pvp
 	{
 		static final int BOUNTY_HUNTER_INFO = 6;
-		static final int KILLDEATH_RATIO = 34;
-		static final int SKULL_CONTAINER = 54;
-		static final int SAFE_ZONE = 56;
-		static final int WILDERNESS_LEVEL = 59; // this can also be the Deadman Mode "Protection" text
+		static final int KILLDEATH_RATIO = 28;
+		static final int SKULL_CONTAINER = 48;
+		static final int SAFE_ZONE = 50;
+		static final int WILDERNESS_LEVEL = 53; // this can also be the Deadman Mode "Protection" text
 	}
 
 	static class KourendFavour
@@ -907,7 +910,7 @@ public class WidgetID
 
 	static class GenericScroll
 	{
-		static final int TEXT = 6;
+		static final int TEXT = 7;
 	}
 
 	static class GauntletTimer

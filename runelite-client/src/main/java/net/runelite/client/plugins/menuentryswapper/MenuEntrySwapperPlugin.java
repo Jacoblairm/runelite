@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.inject.Provides;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -199,6 +200,11 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("talk-to", "jatizso", config::swapTravel);
 		swap("talk-to", "neitiznot", config::swapTravel);
 		swap("talk-to", "rellekka", config::swapTravel);
+		swap("talk-to", "ungael", config::swapTravel);
+		swap("talk-to", "pirate's cove", config::swapTravel);
+		swap("talk-to", "waterbirth island", config::swapTravel);
+		swap("talk-to", "island of stone", config::swapTravel);
+		swap("talk-to", "miscellania", config::swapTravel);
 		swap("talk-to", "follow", config::swapTravel);
 		swap("talk-to", "transport", config::swapTravel);
 		swap("talk-to", "pay", config::swapPay);
@@ -208,6 +214,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("talk-to", "enchant", config::swapEnchant);
 		swap("talk-to", "start-minigame", config::swapStartMinigame);
 		swap("talk-to", ESSENCE_MINE_NPCS::contains, "teleport", config::swapEssenceMineTeleport);
+		swap("talk-to", "collect", config::swapCollectMiscellania);
 
 		swap("leave tomb", "quick-leave", config::swapQuickLeave);
 		swap("tomb door", "quick-leave", config::swapQuickLeave);
@@ -231,12 +238,14 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("view", "add-house", () -> config.swapHouseAdvertisement() == HouseAdvertisementMode.ADD_HOUSE);
 		swap("view", "visit-last", () -> config.swapHouseAdvertisement() == HouseAdvertisementMode.VISIT_LAST);
 
-		for (String option : new String[]{"zanaris", "configure", "tree"})
+		for (String option : new String[]{"zanaris", "tree"})
 		{
 			swapContains(option, alwaysTrue(), "last-destination", () -> config.swapFairyRing() == FairyRingMode.LAST_DESTINATION);
 			swapContains(option, alwaysTrue(), "configure", () -> config.swapFairyRing() == FairyRingMode.CONFIGURE);
 		}
 
+		swapContains("configure", alwaysTrue(), "last-destination", () ->
+			config.swapFairyRing() == FairyRingMode.LAST_DESTINATION || config.swapFairyRing() == FairyRingMode.ZANARIS);
 		swapContains("tree", alwaysTrue(), "zanaris", () -> config.swapFairyRing() == FairyRingMode.ZANARIS);
 
 		swap("check", "reset", config::swapBoxTrap);
@@ -263,7 +272,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 		swap("teleport menu", "duel arena", config::swapJewelleryBox);
 		swap("teleport menu", "castle wars", config::swapJewelleryBox);
-		swap("teleport menu", "clan wars", config::swapJewelleryBox);
+		swap("teleport menu", "ferox enclave", config::swapJewelleryBox);
 		swap("teleport menu", "burthorpe", config::swapJewelleryBox);
 		swap("teleport menu", "barbarian outpost", config::swapJewelleryBox);
 		swap("teleport menu", "corporeal beast", config::swapJewelleryBox);
@@ -294,27 +303,11 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 		swap("view offer", "abort offer", () -> shiftModifier() && config.swapGEAbort());
 
-		swap("cast", "npc contact", "honest jimmy", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "bert the sandman", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "advisor ghrim", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "dark mage", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "lanthus", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "turael", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "mazchna", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "vannaka", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "chaeldar", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "nieve", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "steve", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "duradel", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "krystilia", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "konar", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "murphy", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "cyrisus", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "smoggy", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "ginea", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "watson", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "barbarian guard", () -> shiftModifier() && config.swapNpcContact());
-		swap("cast", "npc contact", "random", () -> shiftModifier() && config.swapNpcContact());
+		Arrays.asList(
+			"honest jimmy", "bert the sandman", "advisor ghrim", "dark mage", "lanthus", "turael", "mazchna", "vannaka",
+			"chaeldar", "nieve", "steve", "duradel", "krystilia", "konar", "murphy", "cyrisus", "smoggy", "ginea", "watson",
+			"barbarian guard", "amy", "random"
+		).forEach(npc -> swap("cast", "npc contact", npc, () -> shiftModifier() && config.swapNpcContact()));
 
 		swap("value", "buy 1", () -> shiftModifier() && config.shopBuy() == BuyMode.BUY_1);
 		swap("value", "buy 5", () -> shiftModifier() && config.shopBuy() == BuyMode.BUY_5);
@@ -331,6 +324,8 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("wield", "teleport", config::swapTeleportItem);
 
 		swap("bury", "use", config::swapBones);
+
+		swap("clean", "use", config::swapHerbs);
 
 		swap("collect-note", "collect-item", () -> config.swapGEItemCollect() == GEItemCollectMode.ITEMS);
 		swap("collect-notes", "collect-items", () -> config.swapGEItemCollect() == GEItemCollectMode.ITEMS);
@@ -525,14 +520,18 @@ public class MenuEntrySwapperPlugin extends Plugin
 		// is what builds the context menu row which is what the eventual click will use
 
 		// Swap to shift-click deposit behavior
-		// Deposit- op 1 is the current withdraw amount 1/5/10/x for deposit box interface
+		// Deposit- op 1 is the current withdraw amount 1/5/10/x for deposit box interface and chambers of xeric storage unit.
 		// Deposit- op 2 is the current withdraw amount 1/5/10/x for bank interface
 		if (shiftModifier() && config.bankDepositShiftClick() != ShiftDepositMode.OFF
-			&& menuEntryAdded.getType() == MenuAction.CC_OP.getId() && (menuEntryAdded.getIdentifier() == 2 || menuEntryAdded.getIdentifier() == 1)
-			&& menuEntryAdded.getOption().startsWith("Deposit-"))
+			&& menuEntryAdded.getType() == MenuAction.CC_OP.getId()
+			&& (menuEntryAdded.getIdentifier() == 2 || menuEntryAdded.getIdentifier() == 1)
+			&& (menuEntryAdded.getOption().startsWith("Deposit-") || menuEntryAdded.getOption().startsWith("Store") || menuEntryAdded.getOption().startsWith("Donate")))
 		{
 			ShiftDepositMode shiftDepositMode = config.bankDepositShiftClick();
-			final int opId = WidgetInfo.TO_GROUP(menuEntryAdded.getActionParam1()) == WidgetID.DEPOSIT_BOX_GROUP_ID ? shiftDepositMode.getIdentifierDepositBox() : shiftDepositMode.getIdentifier();
+			final int widgetGroupId = WidgetInfo.TO_GROUP(menuEntryAdded.getActionParam1());
+			final int opId = widgetGroupId == WidgetID.DEPOSIT_BOX_GROUP_ID ? shiftDepositMode.getIdentifierDepositBox()
+				: widgetGroupId == WidgetID.CHAMBERS_OF_XERIC_STORAGE_UNIT_INVENTORY_GROUP_ID ? shiftDepositMode.getIdentifierChambersStorageUnit()
+				: shiftDepositMode.getIdentifier();
 			final int actionId = opId >= 6 ? MenuAction.CC_OP_LOW_PRIORITY.getId() : MenuAction.CC_OP.getId();
 			bankModeSwap(actionId, opId);
 		}
@@ -541,11 +540,21 @@ public class MenuEntrySwapperPlugin extends Plugin
 		// Deposit- op 1 is the current withdraw amount 1/5/10/x
 		if (shiftModifier() && config.bankWithdrawShiftClick() != ShiftWithdrawMode.OFF
 			&& menuEntryAdded.getType() == MenuAction.CC_OP.getId() && menuEntryAdded.getIdentifier() == 1
-			&& menuEntryAdded.getOption().startsWith("Withdraw-"))
+			&& menuEntryAdded.getOption().startsWith("Withdraw"))
 		{
 			ShiftWithdrawMode shiftWithdrawMode = config.bankWithdrawShiftClick();
-			final int actionId = shiftWithdrawMode.getMenuAction().getId();
-			final int opId = shiftWithdrawMode.getIdentifier();
+			final int widgetGroupId = WidgetInfo.TO_GROUP(menuEntryAdded.getActionParam1());
+			final int actionId, opId;
+			if (widgetGroupId == WidgetID.CHAMBERS_OF_XERIC_STORAGE_UNIT_PRIVATE_GROUP_ID || widgetGroupId == WidgetID.CHAMBERS_OF_XERIC_STORAGE_UNIT_SHARED_GROUP_ID)
+			{
+				actionId = MenuAction.CC_OP.getId();
+				opId = shiftWithdrawMode.getIdentifierChambersStorageUnit();
+			}
+			else
+			{
+				actionId = shiftWithdrawMode.getMenuAction().getId();
+				opId = shiftWithdrawMode.getIdentifier();
+			}
 			bankModeSwap(actionId, opId);
 		}
 	}

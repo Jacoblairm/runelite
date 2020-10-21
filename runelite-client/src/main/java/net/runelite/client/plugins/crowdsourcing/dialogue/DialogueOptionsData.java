@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Tomas Slusny <slusnucky@gmail.com>
+ * Copyright (c) 2019, Weird Gloop <admin@weirdgloop.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,25 +22,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.discord;
 
-/**
- * Discord reply type for request
- */
-public enum DiscordReplyType
+package net.runelite.client.plugins.crowdsourcing.dialogue;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class DialogueOptionsData
 {
-	/**
-	 * Used to decline a request
-	 */
-	NO,
-
-	/**
-	 * Used to accept a request
-	 */
-	YES,
-
-	/**
-	 * Currently unused response, treated like NO.
-	 */
-	IGNORE
+	private final String[] options;
 }
