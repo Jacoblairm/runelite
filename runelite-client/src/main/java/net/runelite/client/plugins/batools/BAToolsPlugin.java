@@ -29,7 +29,7 @@ import net.runelite.api.MenuEntry;
 import net.runelite.api.Client;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.WidgetHiddenChanged;
+//import net.runelite.api.events.WidgetHiddenChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.ChatMessage;
@@ -298,7 +298,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 		}
 	}
 
-	@Subscribe
+	/*@Subscribe
 	public void onWidgetHiddenChanged(WidgetHiddenChanged event)
 	{
 
@@ -364,7 +364,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 			}
 
 		}
-	}
+	}*/
 
 	@Subscribe
 	public void onGameTick(GameTick event)
