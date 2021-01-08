@@ -66,6 +66,8 @@ class FishingOverlay extends OverlayPanel
 		AnimationID.FISHING_DRAGON_HARPOON,
 		AnimationID.FISHING_HARPOON,
 		AnimationID.FISHING_INFERNAL_HARPOON,
+		AnimationID.FISHING_TRAILBLAZER_HARPOON,
+		AnimationID.FISHING_TRAILBLAZER_HARPOON_2,
 		AnimationID.FISHING_KARAMBWAN,
 		AnimationID.FISHING_NET,
 		AnimationID.FISHING_OILY_ROD,
@@ -73,6 +75,9 @@ class FishingOverlay extends OverlayPanel
 		AnimationID.FISHING_PEARL_ROD,
 		AnimationID.FISHING_PEARL_FLY_ROD,
 		AnimationID.FISHING_PEARL_BARBARIAN_ROD,
+		AnimationID.FISHING_PEARL_ROD_2,
+		AnimationID.FISHING_PEARL_FLY_ROD_2,
+		AnimationID.FISHING_PEARL_BARBARIAN_ROD_2,
 		AnimationID.FISHING_PEARL_OILY_ROD);
 
 	private final Client client;

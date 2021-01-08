@@ -43,15 +43,17 @@ import javax.swing.SwingUtilities;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.SpriteID;
+import net.runelite.api.events.ActorDeath;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.PlayerDeath;
+import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.Widget;
 import static net.runelite.api.widgets.WidgetID.BARROWS_REWARD_GROUP_ID;
@@ -63,8 +65,6 @@ import static net.runelite.api.widgets.WidgetID.LEVEL_UP_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.QUEST_COMPLETED_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.THEATRE_OF_BLOOD_REWARD_GROUP_ID;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.api.events.ScriptCallbackEvent;
-import net.runelite.client.Notifier;
 import static net.runelite.client.RuneLite.SCREENSHOT_DIR;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -102,9 +102,14 @@ public class ScreenshotPlugin extends Plugin
 	private static final Pattern VALUABLE_DROP_PATTERN = Pattern.compile(".*Valuable drop: ([^<>]+)(?:</col>)?");
 	private static final Pattern UNTRADEABLE_DROP_PATTERN = Pattern.compile(".*Untradeable drop: ([^<>]+)(?:</col>)?");
 	private static final Pattern DUEL_END_PATTERN = Pattern.compile("You have now (won|lost) ([0-9]+) duels?\\.");
+	private static final Pattern QUEST_PATTERN_1 = Pattern.compile(".+?ve\\.*? (?<verb>been|rebuilt|.+?ed)? ?(?:the )?'?(?<quest>.+?)'?(?: [Qq]uest)?[!.]?$");
+	private static final Pattern QUEST_PATTERN_2 = Pattern.compile("'?(?<quest>.+?)'?(?: [Qq]uest)? (?<verb>[a-z]\\w+?ed)?(?: f.*?)?[!.]?$");
+	private static final ImmutableList<String> RFD_TAGS = ImmutableList.of("Another Cook", "freed", "defeated", "saved");
+	private static final ImmutableList<String> WORD_QUEST_IN_NAME_TAGS = ImmutableList.of("Another Cook", "Doric", "Heroes", "Legends", "Observatory", "Olaf", "Waterfall");
 	private static final ImmutableList<String> PET_MESSAGES = ImmutableList.of("You have a funny feeling like you're being followed",
 		"You feel something weird sneaking into your backpack",
 		"You have a funny feeling like you would have been followed");
+	private static final Pattern BA_HIGH_GAMBLE_REWARD_PATTERN = Pattern.compile("(?<reward>.+)!<br>High level gamble count: <col=7f0000>(?<gambleCount>.+)</col>");
 
 	private String clueType;
 	private Integer clueNumber;
@@ -127,9 +132,6 @@ public class ScreenshotPlugin extends Plugin
 
 	@Inject
 	private ScreenshotOverlay screenshotOverlay;
-
-	@Inject
-	private Notifier notifier;
 
 	@Inject
 	private Client client;
@@ -184,7 +186,7 @@ public class ScreenshotPlugin extends Plugin
 		SCREENSHOT_DIR.mkdirs();
 		keyManager.registerKeyListener(hotkeyListener);
 
-		final BufferedImage iconImage = ImageUtil.getResourceStreamFromClass(getClass(), "screenshot.png");
+		final BufferedImage iconImage = ImageUtil.loadImageResource(getClass(), "screenshot.png");
 
 		titleBarButton = NavigationButton.builder()
 			.tab(false)
@@ -233,14 +235,28 @@ public class ScreenshotPlugin extends Plugin
 		}
 		else if (client.getWidget(WidgetInfo.DIALOG_SPRITE_TEXT) != null)
 		{
-			fileName = parseLevelUpWidget(WidgetInfo.DIALOG_SPRITE_TEXT);
-			screenshotSubDir = "Levels";
+			String text = client.getWidget(WidgetInfo.DIALOG_SPRITE_TEXT).getText();
+			if (Text.removeTags(text).contains("High level gamble"))
+			{
+				if (config.screenshotHighGamble())
+				{
+					fileName = parseBAHighGambleWidget(text);
+					screenshotSubDir = "BA High Gambles";
+				}
+			}
+			else
+			{
+				if (config.screenshotLevels())
+				{
+					fileName = parseLevelUpWidget(WidgetInfo.DIALOG_SPRITE_TEXT);
+					screenshotSubDir = "Levels";
+				}
+			}
 		}
 		else if (client.getWidget(WidgetInfo.QUEST_COMPLETED_NAME_TEXT) != null)
 		{
-			// "You have completed The Corsair Curse!"
 			String text = client.getWidget(WidgetInfo.QUEST_COMPLETED_NAME_TEXT).getText();
-			fileName = "Quest(" + text.substring(19, text.length() - 1) + ")";
+			fileName = parseQuestCompletedWidget(text);
 			screenshotSubDir = "Quests";
 		}
 
@@ -251,16 +267,20 @@ public class ScreenshotPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onPlayerDeath(PlayerDeath playerDeath)
+	public void onActorDeath(ActorDeath actorDeath)
 	{
-		Player player = playerDeath.getPlayer();
-		if (player == client.getLocalPlayer() && config.screenshotPlayerDeath())
+		Actor actor = actorDeath.getActor();
+		if (actor instanceof Player)
 		{
-			takeScreenshot("Death", "Deaths");
-		}
-		else if (player != client.getLocalPlayer() && (player.isClanMember() || player.isFriend()) && config.screenshotFriendDeath() && player.getCanvasTilePoly() != null)
-		{
-			takeScreenshot("Death " + player.getName(), "Deaths");
+			Player player = (Player) actor;
+			if (player == client.getLocalPlayer() && config.screenshotPlayerDeath())
+			{
+				takeScreenshot("Death", "Deaths");
+			}
+			else if (player != client.getLocalPlayer() && (player.isFriendsChatMember() || player.isFriend()) && config.screenshotFriendDeath() && player.getCanvasTilePoly() != null)
+			{
+				takeScreenshot("Death " + player.getName(), "Deaths");
+			}
 		}
 	}
 
@@ -279,7 +299,7 @@ public class ScreenshotPlugin extends Plugin
 	@Subscribe
 	public void onScriptCallbackEvent(ScriptCallbackEvent e)
 	{
-		if (!"confirmClanKick".equals(e.getEventName()))
+		if (!"confirmFriendsChatKick".equals(e.getEventName()))
 		{
 			return;
 		}
@@ -353,14 +373,14 @@ public class ScreenshotPlugin extends Plugin
 			}
 		}
 
-		if (config.screenshotCcKick() && chatMessage.equals("Your request to kick/ban this user was successful."))
+		if (config.screenshotKick() && chatMessage.equals("Your request to kick/ban this user was successful."))
 		{
 			if (kickPlayerName == null)
 			{
 				return;
 			}
 
-			takeScreenshot("Kick " + kickPlayerName, "Clan Chat Kicks");
+			takeScreenshot("Kick " + kickPlayerName, "Friends Chat Kicks");
 			kickPlayerName = null;
 		}
 
@@ -370,7 +390,7 @@ public class ScreenshotPlugin extends Plugin
 			takeScreenshot(fileName, "Pets");
 		}
 
-		if (config.screenshotBossKills() )
+		if (config.screenshotBossKills())
 		{
 			Matcher m = BOSSKILL_MESSAGE_PATTERN.matcher(chatMessage);
 			if (m.matches())
@@ -447,8 +467,13 @@ public class ScreenshotPlugin extends Plugin
 				}
 				break;
 			case LEVEL_UP_GROUP_ID:
-			case DIALOG_SPRITE_GROUP_ID:
 				if (!config.screenshotLevels())
+				{
+					return;
+				}
+				break;
+			case DIALOG_SPRITE_GROUP_ID:
+				if (!(config.screenshotLevels() || config.screenshotHighGamble()))
 				{
 					return;
 				}
@@ -575,11 +600,75 @@ public class ScreenshotPlugin extends Plugin
 	}
 
 	/**
+	 * Parses the passed quest completion dialog text into a shortened string for filename usage.
+	 *
+	 * @param text The {@link Widget#getText() text} of the {@link WidgetInfo#QUEST_COMPLETED_NAME_TEXT} widget.
+	 * @return Shortened string in the format "Quest(The Corsair Curse)"
+	 */
+	@VisibleForTesting
+	static String parseQuestCompletedWidget(final String text)
+	{
+		// "You have completed The Corsair Curse!"
+		final Matcher questMatch1 = QUEST_PATTERN_1.matcher(text);
+		// "'One Small Favour' completed!"
+		final Matcher questMatch2 = QUEST_PATTERN_2.matcher(text);
+		final Matcher questMatchFinal = questMatch1.matches() ? questMatch1 : questMatch2;
+		if (!questMatchFinal.matches())
+		{
+			return "Quest(quest not found)";
+		}
+
+		String quest = questMatchFinal.group("quest");
+		String verb = questMatchFinal.group("verb") != null ? questMatchFinal.group("verb") : "";
+
+		if (verb.contains("kind of"))
+		{
+			quest += " partial completion";
+		}
+		else if (verb.contains("completely"))
+		{
+			quest += " II";
+		}
+
+		if (RFD_TAGS.stream().anyMatch((quest + verb)::contains))
+		{
+			quest = "Recipe for Disaster - " + quest;
+		}
+
+		if (WORD_QUEST_IN_NAME_TAGS.stream().anyMatch(quest::contains))
+		{
+			quest += " Quest";
+		}
+
+		return "Quest(" + quest + ')';
+	}
+
+	/**
+	 * Parses the Barbarian Assault high gamble reward dialog text into a shortened string for filename usage.
+	 *
+	 * @param text The {@link Widget#getText() text} of the {@link WidgetInfo#DIALOG_SPRITE_TEXT} widget.
+	 * @return Shortened string in the format "High Gamble(100)"
+	 */
+	@VisibleForTesting
+	static String parseBAHighGambleWidget(final String text)
+	{
+		final Matcher highGambleMatch = BA_HIGH_GAMBLE_REWARD_PATTERN.matcher(text);
+		if (highGambleMatch.find())
+		{
+			String gambleCount = highGambleMatch.group("gambleCount");
+			return String.format("High Gamble(%s)", gambleCount);
+		}
+
+		return "High Gamble(count not found)";
+	}
+
+
+	/**
 	 * Saves a screenshot of the client window to the screenshot folder as a PNG,
 	 * and optionally uploads it to an image-hosting service.
 	 *
-	 * @param fileName    Filename to use, without file extension.
-	 * @param subDir      Subdirectory to store the captured screenshot in.
+	 * @param fileName Filename to use, without file extension.
+	 * @param subDir   Subdirectory to store the captured screenshot in.
 	 */
 	private void takeScreenshot(String fileName, String subDir)
 	{

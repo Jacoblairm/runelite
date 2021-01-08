@@ -30,7 +30,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Provides;
 import java.awt.Color;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,6 +48,7 @@ import net.runelite.api.DecorativeObject;
 import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.GroundObject;
+import net.runelite.api.KeyCode;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.ObjectComposition;
@@ -59,7 +59,6 @@ import net.runelite.api.WallObject;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.DecorativeObjectDespawned;
 import net.runelite.api.events.DecorativeObjectSpawned;
-import net.runelite.api.events.FocusChanged;
 import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
@@ -72,8 +71,6 @@ import net.runelite.api.events.WallObjectDespawned;
 import net.runelite.api.events.WallObjectSpawned;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.input.KeyListener;
-import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -85,7 +82,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 	enabledByDefault = false
 )
 @Slf4j
-public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
+public class ObjectIndicatorsPlugin extends Plugin
 {
 	private static final String CONFIG_GROUP = "objectindicators";
 	private static final String MARK = "Mark object";
@@ -95,7 +92,6 @@ public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
 	@Getter(AccessLevel.PACKAGE)
 	private final List<ColorTileObject> objects = new ArrayList<>();
 	private final Map<Integer, Set<ObjectPoint>> points = new HashMap<>();
-	private boolean hotKeyPressed;
 
 	@Inject
 	private Client client;
@@ -110,9 +106,6 @@ public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
 	private ObjectIndicatorsOverlay overlay;
 
 	@Inject
-	private KeyManager keyManager;
-
-	@Inject
 	private ObjectIndicatorsConfig config;
 
 	@Provides
@@ -125,50 +118,14 @@ public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
 	protected void startUp()
 	{
 		overlayManager.add(overlay);
-		keyManager.registerKeyListener(this);
 	}
 
 	@Override
 	protected void shutDown()
 	{
 		overlayManager.remove(overlay);
-		keyManager.unregisterKeyListener(this);
 		points.clear();
 		objects.clear();
-		hotKeyPressed = false;
-	}
-
-	@Override
-	public void keyTyped(KeyEvent e)
-	{
-
-	}
-
-	@Override
-	public void keyPressed(KeyEvent e)
-	{
-		if (e.getKeyCode() == KeyEvent.VK_SHIFT)
-		{
-			hotKeyPressed = true;
-		}
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e)
-	{
-		if (e.getKeyCode() == KeyEvent.VK_SHIFT)
-		{
-			hotKeyPressed = false;
-		}
-	}
-
-	@Subscribe
-	public void onFocusChanged(final FocusChanged event)
-	{
-		if (!event.isFocused())
-		{
-			hotKeyPressed = false;
-		}
 	}
 
 	@Subscribe
@@ -258,7 +215,7 @@ public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
 	@Subscribe
 	public void onMenuEntryAdded(MenuEntryAdded event)
 	{
-		if (!hotKeyPressed || event.getType() != MenuAction.EXAMINE_OBJECT.getId())
+		if (event.getType() != MenuAction.EXAMINE_OBJECT.getId() || !client.isKeyPressed(KeyCode.KC_SHIFT))
 		{
 			return;
 		}
@@ -321,7 +278,7 @@ public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
 
 	private void checkObjectPoints(TileObject object)
 	{
-		final WorldPoint worldPoint = WorldPoint.fromLocalInstance(client, object.getLocalLocation());
+		final WorldPoint worldPoint = WorldPoint.fromLocalInstance(client, object.getLocalLocation(), object.getPlane());
 		final Set<ObjectPoint> objectPoints = points.get(worldPoint.getRegionID());
 
 		if (objectPoints == null)

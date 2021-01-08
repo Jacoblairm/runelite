@@ -82,12 +82,13 @@ public class WorldMapPlugin extends Plugin
 	static final String CONFIG_KEY_FARMING_PATCH_TOOLTIPS = "farmingpatchTooltips";
 	static final String CONFIG_KEY_RARE_TREE_TOOLTIPS = "rareTreeTooltips";
 	static final String CONFIG_KEY_RARE_TREE_LEVEL_ICON = "rareTreeIcon";
-	static final String CONFIG_KEY_TRANSPORATION_TELEPORT_TOOLTIPS = "transportationTooltips";
+	static final String CONFIG_KEY_TRANSPORTATION_TELEPORT_TOOLTIPS = "transportationTooltips";
 	static final String CONFIG_KEY_RUNECRAFTING_ALTAR_ICON = "runecraftingAltarIcon";
 	static final String CONFIG_KEY_MINING_SITE_TOOLTIPS = "miningSiteTooltips";
 	static final String CONFIG_KEY_DUNGEON_TOOLTIPS = "dungeonTooltips";
 	static final String CONFIG_KEY_HUNTER_AREA_TOOLTIPS = "hunterAreaTooltips";
 	static final String CONFIG_KEY_FISHING_SPOT_TOOLTIPS = "fishingSpotTooltips";
+	static final String CONFIG_KEY_KOUREND_TASK_TOOLTIPS = "kourendTaskTooltips";
 
 	static
 	{
@@ -100,31 +101,31 @@ public class WorldMapPlugin extends Plugin
 		BLANK_ICON = new BufferedImage(iconBufferSize, iconBufferSize, BufferedImage.TYPE_INT_ARGB);
 
 		FAIRY_TRAVEL_ICON = new BufferedImage(iconBufferSize, iconBufferSize, BufferedImage.TYPE_INT_ARGB);
-		final BufferedImage fairyTravelIcon = ImageUtil.getResourceStreamFromClass(WorldMapPlugin.class, "fairy_ring_travel.png");
+		final BufferedImage fairyTravelIcon = ImageUtil.loadImageResource(WorldMapPlugin.class, "fairy_ring_travel.png");
 		FAIRY_TRAVEL_ICON.getGraphics().drawImage(fairyTravelIcon, 1, 1, null);
 
 		NOPE_ICON = new BufferedImage(iconBufferSize, iconBufferSize, BufferedImage.TYPE_INT_ARGB);
-		final BufferedImage nopeImage = ImageUtil.getResourceStreamFromClass(WorldMapPlugin.class, "nope_icon.png");
+		final BufferedImage nopeImage = ImageUtil.loadImageResource(WorldMapPlugin.class, "nope_icon.png");
 		NOPE_ICON.getGraphics().drawImage(nopeImage, 1, 1, null);
 
 		NOT_STARTED_ICON = new BufferedImage(questIconBufferSize, questIconBufferSize, BufferedImage.TYPE_INT_ARGB);
-		final BufferedImage notStartedIcon = ImageUtil.getResourceStreamFromClass(WorldMapPlugin.class, "quest_not_started_icon.png");
+		final BufferedImage notStartedIcon = ImageUtil.loadImageResource(WorldMapPlugin.class, "quest_not_started_icon.png");
 		NOT_STARTED_ICON.getGraphics().drawImage(notStartedIcon, 4, 4, null);
 
 		STARTED_ICON = new BufferedImage(questIconBufferSize, questIconBufferSize, BufferedImage.TYPE_INT_ARGB);
-		final BufferedImage startedIcon = ImageUtil.getResourceStreamFromClass(WorldMapPlugin.class, "quest_started_icon.png");
+		final BufferedImage startedIcon = ImageUtil.loadImageResource(WorldMapPlugin.class, "quest_started_icon.png");
 		STARTED_ICON.getGraphics().drawImage(startedIcon, 4, 4, null);
 
 		FINISHED_ICON = new BufferedImage(questIconBufferSize, questIconBufferSize, BufferedImage.TYPE_INT_ARGB);
-		final BufferedImage finishedIcon = ImageUtil.getResourceStreamFromClass(WorldMapPlugin.class, "quest_completed_icon.png");
+		final BufferedImage finishedIcon = ImageUtil.loadImageResource(WorldMapPlugin.class, "quest_completed_icon.png");
 		FINISHED_ICON.getGraphics().drawImage(finishedIcon, 4, 4, null);
 
 		MINING_SITE_ICON = new BufferedImage(iconBufferSize, iconBufferSize, BufferedImage.TYPE_INT_ARGB);
-		final BufferedImage miningSiteIcon = ImageUtil.getResourceStreamFromClass(WorldMapPlugin.class, "mining_site_icon.png");
+		final BufferedImage miningSiteIcon = ImageUtil.loadImageResource(WorldMapPlugin.class, "mining_site_icon.png");
 		MINING_SITE_ICON.getGraphics().drawImage(miningSiteIcon, 1, 1, null);
 
 		ROOFTOP_COURSE_ICON = new BufferedImage(iconBufferSize, iconBufferSize, BufferedImage.TYPE_INT_ARGB);
-		final BufferedImage rooftopCourseIcon = ImageUtil.getResourceStreamFromClass(WorldMapPlugin.class, "rooftop_course_icon.png");
+		final BufferedImage rooftopCourseIcon = ImageUtil.loadImageResource(WorldMapPlugin.class, "rooftop_course_icon.png");
 		ROOFTOP_COURSE_ICON.getGraphics().drawImage(rooftopCourseIcon, 1, 1, null);
 	}
 
@@ -383,6 +384,14 @@ public class WorldMapPlugin extends Plugin
 					.forEach(worldMapPointManager::add)
 			);
 		}
+
+		worldMapPointManager.removeIf(KourendTaskPoint.class::isInstance);
+		if (config.kourendTaskTooltips())
+		{
+			Arrays.stream(KourendTaskLocation.values())
+				.map(KourendTaskPoint::new)
+				.forEach(worldMapPointManager::add);
+		}
 	}
 
 	private void updateQuestStartPointIcons()
@@ -415,11 +424,11 @@ public class WorldMapPlugin extends Plugin
 
 		// Get first uncompleted quest. Else, return the last quest.
 		Quest quest = null;
-		for (int i = 0; i < quests.length; i++)
+		for (Quest q : quests)
 		{
-			if (quests[i].getState(client) != QuestState.FINISHED)
+			if (q.getState(client) != QuestState.FINISHED)
 			{
-				quest = quests[i];
+				quest = q;
 				break;
 			}
 		}

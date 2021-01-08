@@ -32,6 +32,7 @@ import java.awt.Point;
 import java.util.regex.Pattern;
 import lombok.Setter;
 import net.runelite.client.ui.overlay.RenderableEntity;
+import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.Text;
 
 @Setter
@@ -43,6 +44,7 @@ public class TextComponent implements RenderableEntity
 	private String text;
 	private Point position = new Point();
 	private Color color = Color.WHITE;
+	private boolean outline;
 
 	@Override
 	public Dimension render(Graphics2D graphics)
@@ -59,9 +61,20 @@ public class TextComponent implements RenderableEntity
 				final String textWithoutCol = Text.removeTags(textSplitOnCol);
 				final String colColor = textSplitOnCol.substring(textSplitOnCol.indexOf("=") + 1, textSplitOnCol.indexOf(">"));
 
-				// shadow
 				graphics.setColor(Color.BLACK);
-				graphics.drawString(textWithoutCol, x + 1, position.y + 1);
+
+				if (outline)
+				{
+					graphics.drawString(textWithoutCol, x, position.y + 1);
+					graphics.drawString(textWithoutCol, x, position.y - 1);
+					graphics.drawString(textWithoutCol, x + 1, position.y);
+					graphics.drawString(textWithoutCol, x - 1, position.y);
+				}
+				else
+				{
+					// shadow
+					graphics.drawString(textWithoutCol, x + 1, position.y + 1);
+				}
 
 				// actual text
 				graphics.setColor(Color.decode("#" + colColor));
@@ -72,12 +85,23 @@ public class TextComponent implements RenderableEntity
 		}
 		else
 		{
-			// shadow
 			graphics.setColor(Color.BLACK);
-			graphics.drawString(text, position.x + 1, position.y + 1);
+
+			if (outline)
+			{
+				graphics.drawString(text, position.x, position.y + 1);
+				graphics.drawString(text, position.x, position.y - 1);
+				graphics.drawString(text, position.x + 1, position.y);
+				graphics.drawString(text, position.x - 1, position.y);
+			}
+			else
+			{
+				// shadow
+				graphics.drawString(text, position.x + 1, position.y + 1);
+			}
 
 			// actual text
-			graphics.setColor(color);
+			graphics.setColor(ColorUtil.colorWithAlpha(color, 0xFF));
 			graphics.drawString(text, position.x, position.y);
 		}
 

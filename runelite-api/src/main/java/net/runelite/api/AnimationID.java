@@ -46,6 +46,7 @@ public final class AnimationID
 	public static final int WOODCUTTING_INFERNAL = 2117;
 	public static final int WOODCUTTING_3A_AXE = 7264;
 	public static final int WOODCUTTING_CRYSTAL = 8324;
+	public static final int WOODCUTTING_TRAILBLAZER = 8778;
 	public static final int CONSUMING = 829; // consuming consumables
 	public static final int FIREMAKING = 733;
 	public static final int DEATH = 836;
@@ -107,6 +108,8 @@ public final class AnimationID
 	public static final int FISHING_DRAGON_HARPOON = 7401;
 	public static final int FISHING_INFERNAL_HARPOON = 7402;
 	public static final int FISHING_CRYSTAL_HARPOON = 8336;
+	public static final int FISHING_TRAILBLAZER_HARPOON = 8784;
+	public static final int FISHING_TRAILBLAZER_HARPOON_2 = 8785;
 	public static final int FISHING_OILY_ROD = 622;
 	public static final int FISHING_KARAMBWAN = 1193;
 	public static final int FISHING_CRUSHING_INFERNAL_EELS = 7553;
@@ -121,8 +124,11 @@ public final class AnimationID
 	public static final int FISHING_BAREHAND_CAUGHT_TUNA_1 = 6710;
 	public static final int FISHING_BAREHAND_CAUGHT_TUNA_2 = 6711;
 	public static final int FISHING_PEARL_ROD = 8188;
-	public static final int FISHING_PEARL_FLY_ROD = 8192;
-	public static final int FISHING_PEARL_BARBARIAN_ROD = 8193;
+	public static final int FISHING_PEARL_FLY_ROD = 8189;
+	public static final int FISHING_PEARL_BARBARIAN_ROD = 8190;
+	public static final int FISHING_PEARL_ROD_2 = 8191;
+	public static final int FISHING_PEARL_FLY_ROD_2 = 8192;
+	public static final int FISHING_PEARL_BARBARIAN_ROD_2 = 8193;
 	public static final int FISHING_PEARL_OILY_ROD = 6932;
 	public static final int MINING_BRONZE_PICKAXE = 625;
 	public static final int MINING_IRON_PICKAXE = 626;
@@ -138,6 +144,9 @@ public final class AnimationID
 	public static final int MINING_INFERNAL_PICKAXE = 4482;
 	public static final int MINING_3A_PICKAXE = 7283;
 	public static final int MINING_CRYSTAL_PICKAXE = 8347;
+	public static final int MINING_TRAILBLAZER_PICKAXE = 8787;
+	public static final int MINING_TRAILBLAZER_PICKAXE_2 = 8788;
+	public static final int MINING_TRAILBLAZER_PICKAXE_3 = 8789;
 	public static final int MINING_MOTHERLODE_BRONZE = 6753;
 	public static final int MINING_MOTHERLODE_IRON = 6754;
 	public static final int MINING_MOTHERLODE_STEEL = 6755;
@@ -152,6 +161,7 @@ public final class AnimationID
 	public static final int MINING_MOTHERLODE_INFERNAL = 4481;
 	public static final int MINING_MOTHERLODE_3A = 7282;
 	public static final int MINING_MOTHERLODE_CRYSTAL = 8345;
+	public static final int MINING_MOTHERLODE_TRAILBLAZER = 8786;
 	public static final int DENSE_ESSENCE_CHIPPING = 7201;
 	public static final int DENSE_ESSENCE_CHISELING = 7202;
 	public static final int HERBLORE_POTIONMAKING = 363; //used for both herb and secondary
@@ -183,6 +193,13 @@ public final class AnimationID
 	public static final int COW_HOME_TELEPORT_4 = 1699;
 	public static final int COW_HOME_TELEPORT_5 = 1700;
 	public static final int COW_HOME_TELEPORT_6 = 1701;
+	public static final int LEAGUE_HOME_TELEPORT_1 = 8798;
+	public static final int LEAGUE_HOME_TELEPORT_2 = 8799;
+	public static final int LEAGUE_HOME_TELEPORT_3 = 8801;
+	public static final int LEAGUE_HOME_TELEPORT_4 = 8803;
+	public static final int LEAGUE_HOME_TELEPORT_5 = 8805;
+	public static final int LEAGUE_HOME_TELEPORT_6 = 8807;
+
 	public static final int CONSTRUCTION = 3676;
 	public static final int SAND_COLLECTION = 895;
 	public static final int PISCARILIUS_CRANE_REPAIR = 7199;

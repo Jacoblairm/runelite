@@ -48,6 +48,7 @@ import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayUtil;
+import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.Text;
 
 public class NpcSceneOverlay extends Overlay
@@ -146,39 +147,38 @@ public class NpcSceneOverlay extends Overlay
 	private void renderNpcOverlay(Graphics2D graphics, NPC actor, Color color)
 	{
 		NPCComposition npcComposition = actor.getTransformedComposition();
-		if (npcComposition == null || !npcComposition.isInteractible())
+		if (npcComposition == null || !npcComposition.isInteractible()
+			|| (actor.isDead() && config.ignoreDeadNpcs()))
 		{
 			return;
 		}
 
-		switch (config.renderStyle())
+		if (config.highlightHull())
 		{
-			case SOUTH_WEST_TILE:
-			{
-				int size = npcComposition.getSize();
-				LocalPoint localPoint = actor.getLocalLocation();
+			Shape objectClickbox = actor.getConvexHull();
+			renderPoly(graphics, color, objectClickbox);
+		}
 
-				int x = localPoint.getX() - ((size - 1) * Perspective.LOCAL_TILE_SIZE / 2);
-				int y = localPoint.getY() - ((size - 1) * Perspective.LOCAL_TILE_SIZE / 2);
+		if (config.highlightTile())
+		{
+			int size = npcComposition.getSize();
+			LocalPoint lp = actor.getLocalLocation();
+			Polygon tilePoly = Perspective.getCanvasTileAreaPoly(client, lp, size);
 
-				Polygon tilePoly = Perspective.getCanvasTilePoly(client, new LocalPoint(x, y));
+			renderPoly(graphics, color, tilePoly);
+		}
 
-				renderPoly(graphics, color, tilePoly);
-				break;
-			}
-			case TILE:
-				int size = npcComposition.getSize();
-				LocalPoint lp = actor.getLocalLocation();
-				Polygon tilePoly = Perspective.getCanvasTileAreaPoly(client, lp, size);
+		if (config.highlightSouthWestTile())
+		{
+			int size = npcComposition.getSize();
+			LocalPoint lp = actor.getLocalLocation();
 
-				renderPoly(graphics, color, tilePoly);
-				break;
+			int x = lp.getX() - ((size - 1) * Perspective.LOCAL_TILE_SIZE / 2);
+			int y = lp.getY() - ((size - 1) * Perspective.LOCAL_TILE_SIZE / 2);
 
-			case HULL:
-				Shape objectClickbox = actor.getConvexHull();
+			Polygon southWestTilePoly = Perspective.getCanvasTilePoly(client, new LocalPoint(x, y));
 
-				renderPoly(graphics, color, objectClickbox);
-				break;
+			renderPoly(graphics, color, southWestTilePoly);
 		}
 
 		if (config.drawNames() && actor.getName() != null)
@@ -200,7 +200,7 @@ public class NpcSceneOverlay extends Overlay
 			graphics.setColor(color);
 			graphics.setStroke(new BasicStroke(2));
 			graphics.draw(polygon);
-			graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 20));
+			graphics.setColor(ColorUtil.colorWithAlpha(color, color.getAlpha() / 12));
 			graphics.fill(polygon);
 		}
 	}

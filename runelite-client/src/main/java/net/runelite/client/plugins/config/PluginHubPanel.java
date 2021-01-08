@@ -87,7 +87,6 @@ import net.runelite.client.ui.components.IconTextField;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
 import net.runelite.client.util.SwingUtil;
-import net.runelite.client.util.Text;
 import net.runelite.client.util.VerificationException;
 
 @Slf4j
@@ -103,25 +102,27 @@ class PluginHubPanel extends PluginPanel
 
 	static
 	{
-		BufferedImage missingIcon = ImageUtil.getResourceStreamFromClass(PluginHubPanel.class, "pluginhub_missingicon.png");
+		BufferedImage missingIcon = ImageUtil.loadImageResource(PluginHubPanel.class, "pluginhub_missingicon.png");
 		MISSING_ICON = new ImageIcon(missingIcon);
 
-		BufferedImage helpIcon = ImageUtil.getResourceStreamFromClass(PluginHubPanel.class, "pluginhub_help.png");
+		BufferedImage helpIcon = ImageUtil.loadImageResource(PluginHubPanel.class, "pluginhub_help.png");
 		HELP_ICON = new ImageIcon(helpIcon);
 		HELP_ICON_HOVER = new ImageIcon(ImageUtil.alphaOffset(helpIcon, -100));
 
-		BufferedImage configureIcon = ImageUtil.getResourceStreamFromClass(PluginHubPanel.class, "pluginhub_configure.png");
+		BufferedImage configureIcon = ImageUtil.loadImageResource(PluginHubPanel.class, "pluginhub_configure.png");
 		CONFIGURE_ICON = new ImageIcon(configureIcon);
 		CONFIGURE_ICON_HOVER = new ImageIcon(ImageUtil.alphaOffset(configureIcon, -100));
 	}
 
-	private class PluginItem extends JPanel
+	private class PluginItem extends JPanel implements SearchablePlugin
 	{
 		private static final int HEIGHT = 70;
 		private static final int ICON_WIDTH = 48;
 		private static final int BOTTOM_LINE_HEIGHT = 16;
 
 		private final ExternalPluginManifest manifest;
+
+		@Getter
 		private final List<String> keywords = new ArrayList<>();
 
 		@Getter
@@ -279,6 +280,8 @@ class PluginHubPanel extends PluginPanel
 							return;
 						}
 					}
+					addrm.setText("Installing");
+					addrm.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
 					externalPluginManager.install(manifest.getInternalName());
 				});
 			}
@@ -286,14 +289,24 @@ class PluginHubPanel extends PluginPanel
 			{
 				addrm.setText("Remove");
 				addrm.setBackground(new Color(0xBE2828));
-				addrm.addActionListener(l -> externalPluginManager.remove(manifest.getInternalName()));
+				addrm.addActionListener(l ->
+				{
+					addrm.setText("Removing");
+					addrm.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
+					externalPluginManager.remove(manifest.getInternalName());
+				});
 			}
 			else
 			{
 				assert update;
 				addrm.setText("Update");
 				addrm.setBackground(new Color(0x1F621F));
-				addrm.addActionListener(l -> externalPluginManager.update());
+				addrm.addActionListener(l ->
+				{
+					addrm.setText("Updating");
+					addrm.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
+					externalPluginManager.update();
+				});
 			}
 			addrm.setBorder(new LineBorder(addrm.getBackground().darker()));
 			addrm.setFocusPainted(false);
@@ -312,7 +325,7 @@ class PluginHubPanel extends PluginPanel
 						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.PREFERRED_SIZE, 100)
 						.addComponent(help, 0, 24, 24)
 						.addComponent(configure, 0, 24, 24)
-						.addComponent(addrm, 0, 50, GroupLayout.PREFERRED_SIZE)
+						.addComponent(addrm, 0, 57, GroupLayout.PREFERRED_SIZE)
 						.addGap(5))));
 
 			int lineHeight = description.getFontMetrics(description.getFont()).getHeight();
@@ -332,6 +345,12 @@ class PluginHubPanel extends PluginPanel
 						.addComponent(configure, BOTTOM_LINE_HEIGHT, BOTTOM_LINE_HEIGHT, BOTTOM_LINE_HEIGHT)
 						.addComponent(addrm, BOTTOM_LINE_HEIGHT, BOTTOM_LINE_HEIGHT, BOTTOM_LINE_HEIGHT))
 					.addGap(5)));
+		}
+
+		@Override
+		public String getSearchableName()
+		{
+			return manifest.getDisplayName();
 		}
 	}
 
@@ -547,22 +566,19 @@ class PluginHubPanel extends PluginPanel
 
 		Stream<PluginItem> stream = plugins.stream();
 
-		String search = searchBar.getText();
-		boolean isSearching = search != null && !search.trim().isEmpty();
+		String query = searchBar.getText();
+		boolean isSearching = query != null && !query.trim().isEmpty();
 		if (isSearching)
 		{
-			String[] searchArray = SPACES.split(search.toLowerCase());
-			stream = stream
-				.filter(p -> Text.matchesSearchTerms(searchArray, p.keywords))
-				.sorted(Comparator.comparing(p -> p.manifest.getDisplayName()));
+			PluginSearch.search(plugins, query).forEach(mainPanel::add);
 		}
 		else
 		{
-			stream = stream
-				.sorted(Comparator.comparing(PluginItem::isInstalled).thenComparing(p -> p.manifest.getDisplayName()));
+			stream
+				.sorted(Comparator.comparing(PluginItem::isInstalled).thenComparing(p -> p.manifest.getDisplayName()))
+				.forEach(mainPanel::add);
 		}
 
-		stream.forEach(mainPanel::add);
 		mainPanel.revalidate();
 	}
 

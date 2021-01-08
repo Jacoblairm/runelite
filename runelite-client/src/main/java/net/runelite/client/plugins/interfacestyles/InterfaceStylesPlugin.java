@@ -175,7 +175,12 @@ public class InterfaceStylesPlugin extends Plugin
 	{
 		if (config.hdMenu())
 		{
-			client.draw2010Menu();
+			client.draw2010Menu(config.menuAlpha());
+			event.consume();
+		}
+		else if (config.menuAlpha() != 255)
+		{
+			client.drawOriginalMenu(config.menuAlpha());
 			event.consume();
 		}
 	}
@@ -259,7 +264,7 @@ public class InterfaceStylesPlugin extends Plugin
 		try
 		{
 			log.debug("Loading: {}", file);
-			BufferedImage image = ImageUtil.getResourceStreamFromClass(this.getClass(), file);
+			BufferedImage image = ImageUtil.loadImageResource(this.getClass(), file);
 			return ImageUtil.getImageSpritePixels(image, client);
 		}
 		catch (RuntimeException ex)

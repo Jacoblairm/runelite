@@ -28,6 +28,7 @@ package net.runelite.client.game;
 import lombok.Getter;
 import static net.runelite.api.NullObjectID.*;
 import static net.runelite.api.ObjectID.*;
+import net.runelite.api.TileObject;
 import net.runelite.api.coords.WorldPoint;
 
 @Getter
@@ -67,7 +68,9 @@ public enum AgilityShortcut
 			// Fossil Island Wyvern Cave
 			STAIRS_31485,
 			// Trollweiss Mountain Cave
-			ROCKY_HANDHOLDS, ROCKY_HANDHOLDS_19847),
+			ROCKY_HANDHOLDS, ROCKY_HANDHOLDS_19847,
+			// Witchaven Dungeon
+			SHORTCUT),
 	BRIMHAVEN_DUNGEON_MEDIUM_PIPE_RETURN(1, "Pipe Squeeze", null, new WorldPoint(2698, 9491, 0), PIPE_21727),
 	BRIMHAVEN_DUNGEON_PIPE_RETURN(1, "Pipe Squeeze", null, new WorldPoint(2655, 9573, 0), PIPE_21728),
 	BRIMHAVEN_DUNGEON_STEPPING_STONES_RETURN(1, "Pipe Squeeze", null, STEPPING_STONE_21739),
@@ -115,10 +118,10 @@ public enum AgilityShortcut
 	GNOME_STRONGHOLD_ROCKS(37, "Rocks", new WorldPoint(2485, 3515, 0), ROCKS_16534, ROCKS_16535),
 	AL_KHARID_MINING_PITCLIFF_SCRAMBLE(38, "Rocks", new WorldPoint(3305, 3315, 0), ROCKS_16549, ROCKS_16550),
 	YANILLE_WALL_GRAPPLE(39, "Grapple Wall", new WorldPoint(2552, 3072, 0), WALL_17047),
-	NEITIZNOT_BRIDGE_REPAIR(40, "Bridge Repair - Quest", new WorldPoint(2315, 3828, 0), ROPE_BRIDGE_21306, ROPE_BRIDGE_21307),
-	NEITIZNOT_BRIDGE_SOUTHEAST(40, "Rope Bridge", null, ROPE_BRIDGE_21308, ROPE_BRIDGE_21309),
-	NEITIZNOT_BRIDGE_NORTHWEST(40, "Rope Bridge", null, ROPE_BRIDGE_21310, ROPE_BRIDGE_21311),
-	NEITIZNOT_BRIDGE_NORTH(40, "Rope Bridge", null, ROPE_BRIDGE_21312, ROPE_BRIDGE_21313),
+	NEITIZNOT_BRIDGE_REPAIR(0, "Bridge Repair - Quest", new WorldPoint(2315, 3828, 0), ROPE_BRIDGE_21306, ROPE_BRIDGE_21307),
+	NEITIZNOT_BRIDGE_SOUTHEAST(0, "Rope Bridge", null, ROPE_BRIDGE_21308, ROPE_BRIDGE_21309),
+	NEITIZNOT_BRIDGE_NORTHWEST(0, "Rope Bridge", null, ROPE_BRIDGE_21310, ROPE_BRIDGE_21311),
+	NEITIZNOT_BRIDGE_NORTH(0, "Rope Bridge", null, ROPE_BRIDGE_21312, ROPE_BRIDGE_21313),
 	NEITIZNOT_BRIDGE_NORTHEAST(40, "Broken Rope bridge", null, ROPE_BRIDGE_21314, ROPE_BRIDGE_21315),
 	KOUREND_LAKE_JUMP_EAST(40, "Stepping Stones", new WorldPoint(1612, 3570, 0), STEPPING_STONE_29729, STEPPING_STONE_29730),
 	KOUREND_LAKE_JUMP_WEST(40, "Stepping Stones", new WorldPoint(1604, 3572, 0), STEPPING_STONE_29729, STEPPING_STONE_29730),
@@ -157,6 +160,7 @@ public enum AgilityShortcut
 	MOS_LEHARMLESS_STEPPING_STONE(60, "Stepping Stone", new WorldPoint(3710, 2970, 0), STEPPING_STONE_19042),
 	WINTERTODT_GAP(60, "Gap", new WorldPoint(1629, 4023, 0), GAP_29326),
 	UNGAEL_ICE(60, "Ice Chunks", null, NULL_25337, NULL_29868, NULL_29869, NULL_29870, ICE_CHUNKS_31822, NULL_31823, ICE_CHUNKS_31990),
+	GWD_LITTLE_CRACK(60, "Little Crack", new WorldPoint(2900, 3712, 0), LITTLE_CRACK),
 	SLAYER_TOWER_MEDIUM_CHAIN_FIRST(61, "Spiked Chain (Floor 1)", new WorldPoint(3421, 3550, 0), SPIKEY_CHAIN),
 	SLAYER_TOWER_MEDIUM_CHAIN_SECOND(61, "Spiked Chain (Floor 2)", new WorldPoint(3420, 3551, 0), SPIKEY_CHAIN_16538),
 	SLAYER_DUNGEON_CREVICE(62, "Narrow Crevice", new WorldPoint(2729, 10008, 0), CREVICE_16539),
@@ -181,9 +185,18 @@ public enum AgilityShortcut
 	TAVERLEY_DUNGEON_ROCKS_SOUTH(70, "Rocks", new WorldPoint(2887, 9631, 0), ROCKS, ROCKS_14106),
 	FOSSIL_ISLAND_HARDWOOD_NORTH(70, "Hole" , new WorldPoint(3712, 3828, 0), HOLE_31481, HOLE_31482),
 	FOSSIL_ISLAND_HARDWOOD_SOUTH(70, "Hole" , new WorldPoint(3714, 3816, 0), HOLE_31481, HOLE_31482),
-	AL_KHARID_WINDOW(70, "Window", new WorldPoint(3293, 3158, 0), BROKEN_WALL_33344, BIG_WINDOW),
-	GWD_SARADOMIN_ROPE_NORTH(70, "Rope Descent", new WorldPoint(2912, 5300, 0), NULL_26371),
-	GWD_SARADOMIN_ROPE_SOUTH(70, "Rope Descent", new WorldPoint(2951, 5267, 0), NULL_26375),
+	AL_KHARID_WINDOW(70, "Window", new WorldPoint(3295, 3158, 0), BROKEN_WALL_33344, BIG_WINDOW)
+	{
+		@Override
+		public boolean matches(TileObject object)
+		{
+			// there are two BIG_WINDOW objects right next to each other here, but only this one is valid
+			return object.getId() != BIG_WINDOW || object.getWorldLocation().equals(getWorldLocation());
+		}
+	},
+	GWD_SARADOMIN_ROPE_NORTH(70, "Rope Descent", new WorldPoint(2912, 5300, 0), NULL_26371, NULL_26561),
+	GWD_SARADOMIN_ROPE_SOUTH(70, "Rope Descent", new WorldPoint(2951, 5267, 0), NULL_26375, NULL_26562),
+	GU_TANOTH_CRUMBLING_WALL(71, "Rocks", new WorldPoint(2545, 3032, 0), CRUMBLING_WALL_40355, ROCKS_40356),
 	SLAYER_TOWER_ADVANCED_CHAIN_FIRST(71, "Spiked Chain (Floor 2)", new WorldPoint(3447, 3578, 0), SPIKEY_CHAIN ),
 	SLAYER_TOWER_ADVANCED_CHAIN_SECOND(71, "Spiked Chain (Floor 3)", new WorldPoint(3446, 3576, 0), SPIKEY_CHAIN_16538),
 	STRONGHOLD_SLAYER_CAVE_TUNNEL(72, "Tunnel", new WorldPoint(2431, 9806, 0), TUNNEL_30174, TUNNEL_30175),
@@ -260,5 +273,10 @@ public enum AgilityShortcut
 	public String getTooltip()
 	{
 		return description + " - Level " + level;
+	}
+
+	public boolean matches(TileObject object)
+	{
+		return true;
 	}
 }
