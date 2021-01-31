@@ -25,6 +25,7 @@
 package net.runelite.client.externalplugins;
 
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -61,11 +62,13 @@ import com.google.gson.JsonParser;
 public class ExternalPluginClient
 {
 	private final OkHttpClient okHttpClient;
+	private final Gson gson;
 
 	@Inject
-	private ExternalPluginClient(OkHttpClient okHttpClient)
+	private ExternalPluginClient(OkHttpClient okHttpClient, Gson gson)
 	{
 		this.okHttpClient = okHttpClient;
+		this.gson = gson;
 	}
 
 	public List<ExternalPluginManifest> downloadManifest() throws IOException, VerificationException
@@ -118,7 +121,7 @@ public class ExternalPluginClient
 				throw new VerificationException("Unable to verify external plugin manifest");
 			}
 
-			return RuneLiteAPI.GSON.fromJson(new String(data, StandardCharsets.UTF_8),
+			return gson.fromJson(new String(data, StandardCharsets.UTF_8),
 				new TypeToken<List<ExternalPluginManifest>>()
 				{
 				}.getType());
@@ -180,7 +183,7 @@ public class ExternalPluginClient
 
 		Request request = new Request.Builder()
 			.url(url)
-			.post(RequestBody.create(RuneLiteAPI.JSON, RuneLiteAPI.GSON.toJson(plugins)))
+			.post(RequestBody.create(RuneLiteAPI.JSON, gson.toJson(plugins)))
 			.build();
 
 		okHttpClient.newCall(request).enqueue(new Callback()
@@ -214,7 +217,7 @@ public class ExternalPluginClient
 			}
 
 			// CHECKSTYLE:OFF
-			return RuneLiteAPI.GSON.fromJson(new InputStreamReader(res.body().byteStream()), new TypeToken<Map<String, Integer>>(){}.getType());
+			return gson.fromJson(new InputStreamReader(res.body().byteStream()), new TypeToken<Map<String, Integer>>(){}.getType());
 			// CHECKSTYLE:ON
 		}
 		catch (JsonSyntaxException ex)

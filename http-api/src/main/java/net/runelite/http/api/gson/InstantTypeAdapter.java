@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Abex
+ * Copyright (c) 2020 Abex
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,34 +22,61 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.externalplugins;
+package net.runelite.http.api.gson;
 
-import java.lang.invoke.MethodHandles;
-import java.net.URL;
-import java.net.URLClassLoader;
-import lombok.Getter;
-import lombok.Setter;
-import net.runelite.client.util.ReflectUtil;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
+import java.io.IOException;
+import java.time.Instant;
 
-class ExternalPluginClassLoader extends URLClassLoader implements ReflectUtil.PrivateLookupableClassLoader
+// Just add water!
+public class InstantTypeAdapter extends TypeAdapter<Instant>
 {
-	@Getter
-	private final ExternalPluginManifest manifest;
-
-	@Getter
-	@Setter
-	private MethodHandles.Lookup lookup;
-
-	ExternalPluginClassLoader(ExternalPluginManifest manifest, URL[] urls)
+	@Override
+	public void write(JsonWriter out, Instant value) throws IOException
 	{
-		super(urls, ExternalPluginClassLoader.class.getClassLoader());
-		this.manifest = manifest;
-		ReflectUtil.installLookupHelper(this);
+		if (value == null)
+		{
+			out.nullValue();
+			return;
+		}
+
+		out.beginObject()
+			.name("seconds")
+			.value(value.getEpochSecond())
+			.name("nanos")
+			.value(value.getNano())
+			.endObject();
 	}
 
 	@Override
-	public Class<?> defineClass0(String name, byte[] b, int off, int len) throws ClassFormatError
+	public Instant read(JsonReader in) throws IOException
 	{
-		return super.defineClass(name, b, off, len);
+		if (in.peek() == JsonToken.NULL)
+		{
+			in.nextNull();
+			return null;
+		}
+
+		long seconds = 0;
+		int nanos = 0;
+		in.beginObject();
+		while (in.peek() != JsonToken.END_OBJECT)
+		{
+			switch (in.nextName())
+			{
+				case "nanos":
+					nanos = in.nextInt();
+					break;
+				case "seconds":
+					seconds = in.nextLong();
+					break;
+			}
+		}
+		in.endObject();
+
+		return Instant.ofEpochSecond(seconds, nanos);
 	}
 }

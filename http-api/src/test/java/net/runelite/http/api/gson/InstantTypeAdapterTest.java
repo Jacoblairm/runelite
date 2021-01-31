@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Abex
+ * Copyright (c) 2021 Abex
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,34 +22,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.externalplugins;
+package net.runelite.http.api.gson;
 
-import java.lang.invoke.MethodHandles;
-import java.net.URL;
-import java.net.URLClassLoader;
-import lombok.Getter;
-import lombok.Setter;
-import net.runelite.client.util.ReflectUtil;
+import java.time.Instant;
+import net.runelite.http.api.RuneLiteAPI;
+import org.junit.Assert;
+import org.junit.Test;
 
-class ExternalPluginClassLoader extends URLClassLoader implements ReflectUtil.PrivateLookupableClassLoader
+public class InstantTypeAdapterTest
 {
-	@Getter
-	private final ExternalPluginManifest manifest;
-
-	@Getter
-	@Setter
-	private MethodHandles.Lookup lookup;
-
-	ExternalPluginClassLoader(ExternalPluginManifest manifest, URL[] urls)
+	@Test
+	public void test()
 	{
-		super(urls, ExternalPluginClassLoader.class.getClassLoader());
-		this.manifest = manifest;
-		ReflectUtil.installLookupHelper(this);
+		test("null", null);
+		test("{\"seconds\":1609538310,\"nanos\":291698903}", Instant.ofEpochSecond(1609538310, 291698903));
 	}
 
-	@Override
-	public Class<?> defineClass0(String name, byte[] b, int off, int len) throws ClassFormatError
+	private void test(String json, Instant object)
 	{
-		return super.defineClass(name, b, off, len);
+		Instant parsed = RuneLiteAPI.GSON.fromJson(json, Instant.class);
+		Assert.assertEquals(object, parsed);
+		String serialized = RuneLiteAPI.GSON.toJson(object);
+		Instant roundTripped = RuneLiteAPI.GSON.fromJson(serialized, Instant.class);
+		Assert.assertEquals(object, roundTripped);
 	}
 }

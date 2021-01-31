@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Abex
+ * Copyright (c) 2020 Abex
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,34 +22,37 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.externalplugins;
+package net.runelite.http.api.gson;
 
-import java.lang.invoke.MethodHandles;
-import java.net.URL;
-import java.net.URLClassLoader;
-import lombok.Getter;
-import lombok.Setter;
-import net.runelite.client.util.ReflectUtil;
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import java.lang.reflect.Modifier;
 
-class ExternalPluginClassLoader extends URLClassLoader implements ReflectUtil.PrivateLookupableClassLoader
+public class IllegalReflectionExclusion implements ExclusionStrategy
 {
-	@Getter
-	private final ExternalPluginManifest manifest;
-
-	@Getter
-	@Setter
-	private MethodHandles.Lookup lookup;
-
-	ExternalPluginClassLoader(ExternalPluginManifest manifest, URL[] urls)
+	@Override
+	public boolean shouldSkipField(FieldAttributes f)
 	{
-		super(urls, ExternalPluginClassLoader.class.getClassLoader());
-		this.manifest = manifest;
-		ReflectUtil.installLookupHelper(this);
+		if (f.getDeclaringClass().getName().startsWith("net.runelite"))
+		{
+			return false;
+		}
+
+		assert !Modifier.isPrivate(f.getDeclaringClass().getModifiers()) : "gsoning private class " + f.getDeclaringClass().getName();
+		try
+		{
+			f.getDeclaringClass().getField(f.getName());
+		}
+		catch (NoSuchFieldException e)
+		{
+			throw new AssertionError("gsoning private field " + f.getDeclaringClass() + "." + f.getName());
+		}
+		return false;
 	}
 
 	@Override
-	public Class<?> defineClass0(String name, byte[] b, int off, int len) throws ClassFormatError
+	public boolean shouldSkipClass(Class<?> clazz)
 	{
-		return super.defineClass(name, b, off, len);
+		return false;
 	}
 }

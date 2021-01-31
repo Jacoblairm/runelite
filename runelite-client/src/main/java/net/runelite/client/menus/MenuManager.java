@@ -26,24 +26,20 @@ package net.runelite.client.menus;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
-import net.runelite.api.NPCComposition;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOptionClicked;
-import net.runelite.api.events.NpcActionChanged;
 import net.runelite.api.events.PlayerMenuOptionsChanged;
 import net.runelite.api.events.WidgetMenuOptionClicked;
 import net.runelite.api.widgets.WidgetInfo;
@@ -66,8 +62,7 @@ public class MenuManager
 	//Maps the indexes that are being used to the menu option.
 	private final Map<Integer, String> playerMenuIndexMap = new HashMap<>();
 	//Used to manage custom non-player menu options
-	private final Multimap<Integer, WidgetMenuOption> managedMenuOptions = HashMultimap.create();
-	private final Set<String> npcMenuOptions = new HashSet<>();
+	private final Multimap<Integer, WidgetMenuOption> managedMenuOptions = LinkedHashMultimap.create();
 
 	@Inject
 	@VisibleForTesting
@@ -117,7 +112,7 @@ public class MenuManager
 	@Subscribe
 	public void onMenuEntryAdded(MenuEntryAdded event)
 	{
-		if (client.getSpellSelected())
+		if (client.getSpellSelected() || event.getType() != MenuAction.CC_OP.getId())
 		{
 			return;
 		}
@@ -192,38 +187,6 @@ public class MenuManager
 
 		playerMenuIndexMap.remove(idx);
 		addPlayerMenuItem(newIdx, menuText);
-	}
-
-	@Subscribe
-	public void onNpcActionChanged(NpcActionChanged event)
-	{
-		NPCComposition composition = event.getNpcComposition();
-		for (String npcOption : npcMenuOptions)
-		{
-			addNpcOption(composition, npcOption);
-		}
-	}
-
-	private void addNpcOption(NPCComposition composition, String npcOption)
-	{
-		String[] actions = composition.getActions();
-		int unused = -1;
-		for (int i = 0; i < actions.length; ++i)
-		{
-			if (actions[i] == null && unused == -1)
-			{
-				unused = i;
-			}
-			else if (actions[i] != null && actions[i].equals(npcOption))
-			{
-				return;
-			}
-		}
-		if (unused == -1)
-		{
-			return;
-		}
-		actions[unused] = npcOption;
 	}
 
 	@Subscribe

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Abex
+ * Copyright (c) 2021 Abex
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,34 +22,30 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.externalplugins;
+package net.runelite.http.api.gson;
 
-import java.lang.invoke.MethodHandles;
-import java.net.URL;
-import java.net.URLClassLoader;
-import lombok.Getter;
-import lombok.Setter;
-import net.runelite.client.util.ReflectUtil;
+import java.awt.Color;
+import net.runelite.http.api.RuneLiteAPI;
+import org.junit.Assert;
+import org.junit.Test;
 
-class ExternalPluginClassLoader extends URLClassLoader implements ReflectUtil.PrivateLookupableClassLoader
+public class ColorTypeAdapterTest
 {
-	@Getter
-	private final ExternalPluginManifest manifest;
-
-	@Getter
-	@Setter
-	private MethodHandles.Lookup lookup;
-
-	ExternalPluginClassLoader(ExternalPluginManifest manifest, URL[] urls)
+	@Test
+	public void test()
 	{
-		super(urls, ExternalPluginClassLoader.class.getClassLoader());
-		this.manifest = manifest;
-		ReflectUtil.installLookupHelper(this);
+		test("null", null);
+		test("{\"value\":-13347208,\"falpha\":0.0}", new Color(0x12345678, false));
+		test("{\"value\":305419896,\"falpha\":0.0}", new Color(0x12345678, true));
+		test("{\"value\":-1.4221317E7,\"falpha\":0.0}", new Color(0xFF26FFFB, true));
 	}
 
-	@Override
-	public Class<?> defineClass0(String name, byte[] b, int off, int len) throws ClassFormatError
+	private void test(String json, Color object)
 	{
-		return super.defineClass(name, b, off, len);
+		Color parsed = RuneLiteAPI.GSON.fromJson(json, Color.class);
+		Assert.assertEquals(object, parsed);
+		String serialized = RuneLiteAPI.GSON.toJson(object);
+		Color roundTripped = RuneLiteAPI.GSON.fromJson(serialized, Color.class);
+		Assert.assertEquals(object, roundTripped);
 	}
 }
