@@ -403,21 +403,21 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 
 	private Widget getWidget()
 	{
-		if (client.getWidget(WidgetInfo.BA_DEF_CALL_TEXT) != null)
+		if (client.getWidget(WidgetID.BA_DEFENDER_GROUP_ID, 11) != null)
 		{
-			return client.getWidget(WidgetInfo.BA_DEF_CALL_TEXT);
+			return client.getWidget(WidgetID.BA_DEFENDER_GROUP_ID, 11);
 		}
-		else if (client.getWidget(WidgetInfo.BA_ATK_CALL_TEXT) != null)
+		else if (client.getWidget(WidgetID.BA_ATTACKER_GROUP_ID, 11) != null)
 		{
-			return client.getWidget(WidgetInfo.BA_ATK_CALL_TEXT);
+			return client.getWidget(WidgetID.BA_ATTACKER_GROUP_ID, 11);
 		}
-		else if (client.getWidget(WidgetInfo.BA_COLL_CALL_TEXT) != null)
+		else if (client.getWidget(WidgetID.BA_COLLECTOR_GROUP_ID, 11) != null)
 		{
-			return client.getWidget(WidgetInfo.BA_COLL_CALL_TEXT);
+			return client.getWidget(WidgetID.BA_COLLECTOR_GROUP_ID, 11);
 		}
-		else if (client.getWidget(WidgetInfo.BA_HEAL_CALL_TEXT) != null)
+		else if (client.getWidget(WidgetID.BA_HEALER_GROUP_ID, 11) != null)
 		{
-			return client.getWidget(WidgetInfo.BA_HEAL_CALL_TEXT);
+			return client.getWidget(WidgetID.BA_HEALER_GROUP_ID, 11);
 		}
 		return null;
 	}
@@ -505,7 +505,7 @@ public class BAToolsPlugin extends Plugin implements KeyListener
 		}
 
 		//Ctrl Healer
-		if(client.getWidget(WidgetInfo.BA_HEAL_CALL_TEXT) == getWidget() && lastHealer != 0 && inGameBit == 1 && config.ctrlHealer() && ctrlDown)
+		if(client.getWidget(WidgetID.BA_HEALER_GROUP_ID, 11) == getWidget() && lastHealer != 0 && inGameBit == 1 && config.ctrlHealer() && ctrlDown)
 		{
 			MenuEntry[] menuEntries = client.getMenuEntries();
 			MenuEntry correctHealer = null;
