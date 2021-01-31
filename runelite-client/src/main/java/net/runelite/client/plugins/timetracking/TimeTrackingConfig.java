@@ -33,20 +33,24 @@ import net.runelite.client.config.Units;
 public interface TimeTrackingConfig extends Config
 {
 	String CONFIG_GROUP = "timetracking";
+	String FARM_TICK_OFFSET = "farmTickOffset";
+	String FARM_TICK_OFFSET_PRECISION = "farmTickOffsetPrecision";
 	String AUTOWEED = "autoweed";
 	String BIRD_HOUSE = "birdhouse";
+	String BOTANIST = "botanist";
 	String TIMERS = "timers";
 	String STOPWATCHES = "stopwatches";
+	String PREFER_SOONEST = "preferSoonest";
 
 	@ConfigItem(
-		keyName = "estimateRelative",
-		name = "Show relative time",
-		description = "Show amount of time remaining instead of completion time",
+		keyName = "timeFormatMode",
+		name = "Time format",
+		description = "What format to display times in",
 		position = 1
 	)
-	default boolean estimateRelative()
+	default TimeFormatMode timeFormatMode()
 	{
-		return false;
+		return TimeFormatMode.ABSOLUTE_24H;
 	}
 
 	@ConfigItem(
@@ -107,7 +111,7 @@ public interface TimeTrackingConfig extends Config
 
 	@ConfigItem(
 		keyName = "timerWarningThreshold",
-		name = "Timer Warning Threshold",
+		name = "Warning Threshold",
 		description = "The time at which to change the timer color to the warning color",
 		position = 6
 	)
@@ -115,6 +119,17 @@ public interface TimeTrackingConfig extends Config
 	default int timerWarningThreshold()
 	{
 		return 10;
+	}
+
+	@ConfigItem(
+		keyName = PREFER_SOONEST,
+		name = "Prefer soonest completion",
+		description = "When displaying completion times on the overview, prefer showing the soonest any patch will complete.",
+		position = 7
+	)
+	default boolean preferSoonest()
+	{
+		return false;
 	}
 
 	@ConfigItem(

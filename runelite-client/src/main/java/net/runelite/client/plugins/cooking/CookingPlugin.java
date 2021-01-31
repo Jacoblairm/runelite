@@ -124,9 +124,9 @@ public class CookingPlugin extends Plugin
 		}
 
 		Duration statTimeout = Duration.ofMinutes(config.statTimeout());
-		Duration sinceCut = Duration.between(session.getLastCookingAction(), Instant.now());
+		Duration sinceCooked = Duration.between(session.getLastCookingAction(), Instant.now());
 
-		if (sinceCut.compareTo(statTimeout) >= 0)
+		if (sinceCooked.compareTo(statTimeout) >= 0)
 		{
 			session = null;
 		}
@@ -176,7 +176,8 @@ public class CookingPlugin extends Plugin
 			|| message.startsWith("You successfully bake")
 			|| message.startsWith("You manage to cook")
 			|| message.startsWith("You roast a")
-			|| message.startsWith("You cook"))
+			|| message.startsWith("You cook")
+			|| message.startsWith("You dry a piece of meat"))
 		{
 			if (session == null)
 			{

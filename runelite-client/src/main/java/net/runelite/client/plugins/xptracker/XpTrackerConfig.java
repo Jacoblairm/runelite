@@ -60,7 +60,7 @@ public interface XpTrackerConfig extends Config
 	)
 	default boolean pauseOnLogout()
 	{
-		return false;
+		return true;
 	}
 
 	@ConfigItem(
@@ -176,5 +176,27 @@ public interface XpTrackerConfig extends Config
 	default XpProgressBarLabel progressBarLabel()
 	{
 		return XpProgressBarLabel.PERCENTAGE;
+	}
+
+	@ConfigItem(
+		position = 12,
+		keyName = "progressBarTooltipLabel",
+		name = "Tooltip label",
+		description = "Configures the info box progress bar tooltip to show Time to goal or percentage complete"
+	)
+	default XpProgressBarLabel progressBarTooltipLabel()
+	{
+		return XpProgressBarLabel.TIME_TO_LEVEL;
+	}
+
+	@ConfigItem(
+		position = 13,
+		keyName = "prioritizeRecentXpSkills",
+		name = "Move recently trained skills to top",
+		description = "Configures whether skills should be organized by most recently gained xp"
+	)
+	default boolean prioritizeRecentXpSkills()
+	{
+		return false;
 	}
 }

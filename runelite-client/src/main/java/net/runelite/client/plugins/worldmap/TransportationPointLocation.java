@@ -139,6 +139,7 @@ enum TransportationPointLocation
 	CANOE_CHAMPIONSGUILD("Canoe", new WorldPoint(3202, 3344, 0)),
 	CANOE_EDGEVILLE("Canoe", new WorldPoint(3130, 3509, 0)),
 	CANOE_LUMBRIDGE("Canoe", new WorldPoint(3241, 3238, 0)),
+	CANOE_FEROXENCLAVE("Canoe", new WorldPoint(3155, 3630, 0)),
 
 	//Gnome Gliders
 	GNOME_GLIDER_KHARID("Gnome Glider", new WorldPoint(3278, 3213, 0)),
@@ -191,6 +192,7 @@ enum TransportationPointLocation
 	MUSHTREE_TAR_SWAMP("Mushtree", new WorldPoint(3676, 3755, 0)),
 	MUSHTREE_VERDANT_VALLEY("Mushtree", new WorldPoint(3757, 3756, 0)),
 	MYTHS_GUILD_PORTAL("Portal to Guilds", new WorldPoint(2456, 2856, 0)),
+	SOUL_WARS_PORTAL("Portal to Edgeville/Ferox Enclave", new WorldPoint(2204, 2858, 0)),
 	TRAIN_KELDAGRIM("Railway Station", new WorldPoint(2941, 10179, 0)),
 	WILDERNESS_LEVER_ARDOUGNE("Wilderness Lever to Deserted Keep", new WorldPoint(2559, 3309, 0), new WorldPoint(3154, 3924, 0)),
 	WILDERNESS_LEVER_EDGEVILLE("Wilderness Lever to Deserted Keep", new WorldPoint(3088, 3474, 0), new WorldPoint(3154, 3924, 0)),

@@ -30,11 +30,14 @@ import com.google.inject.Provides;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import static java.lang.Integer.max;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,18 +47,22 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Actor;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.Hitsplat;
 import net.runelite.api.ItemID;
 import net.runelite.api.MessageNode;
 import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
 import static net.runelite.api.Skill.SLAYER;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.ActorDeath;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.StatChanged;
@@ -92,19 +99,19 @@ public class SlayerPlugin extends Plugin
 	//Chat messages
 	private static final Pattern CHAT_GEM_PROGRESS_MESSAGE = Pattern.compile("^(?:You're assigned to kill|You have received a new Slayer assignment from .*:) (?:[Tt]he )?(?<name>.+?)(?: (?:in|on|south of) (?:the )?(?<location>[^;]+))?(?:; only | \\()(?<amount>\\d+)(?: more to go\\.|\\))$");
 	private static final String CHAT_GEM_COMPLETE_MESSAGE = "You need something new to hunt.";
-	private static final Pattern CHAT_COMPLETE_MESSAGE = Pattern.compile("(?:\\d+,)*\\d+");
+	private static final Pattern CHAT_COMPLETE_MESSAGE = Pattern.compile("You've completed (?:at least )?(?<tasks>[\\d,]+) (?:Wilderness )?tasks?(?: and received \\d+ points, giving you a total of (?<points>[\\d,]+)| and reached the maximum amount of Slayer points \\((?<points2>[\\d,]+)\\))?");
 	private static final String CHAT_CANCEL_MESSAGE = "Your task has been cancelled.";
 	private static final String CHAT_CANCEL_MESSAGE_JAD = "You no longer have a slayer task as you left the fight cave.";
 	private static final String CHAT_CANCEL_MESSAGE_ZUK = "You no longer have a slayer task as you left the Inferno.";
 	private static final String CHAT_SUPERIOR_MESSAGE = "A superior foe has appeared...";
 	private static final String CHAT_BRACELET_SLAUGHTER = "Your bracelet of slaughter prevents your slayer";
-	private static final Pattern CHAT_BRACELET_SLAUGHTER_REGEX = Pattern.compile("Your bracelet of slaughter prevents your slayer count decreasing. It has (\\d{1,2}) charge[s]? left.");
+	private static final Pattern CHAT_BRACELET_SLAUGHTER_REGEX = Pattern.compile("Your bracelet of slaughter prevents your slayer count from decreasing. It has (\\d{1,2}) charges? left\\.");
 	private static final String CHAT_BRACELET_EXPEDITIOUS = "Your expeditious bracelet helps you progress your";
-	private static final Pattern CHAT_BRACELET_EXPEDITIOUS_REGEX = Pattern.compile("Your expeditious bracelet helps you progress your slayer (?:task )?faster. It has (\\d{1,2}) charge[s]? left.");
+	private static final Pattern CHAT_BRACELET_EXPEDITIOUS_REGEX = Pattern.compile("Your expeditious bracelet helps you progress your slayer (?:task )?faster. It has (\\d{1,2}) charges? left\\.");
 	private static final String CHAT_BRACELET_SLAUGHTER_CHARGE = "Your bracelet of slaughter has ";
-	private static final Pattern CHAT_BRACELET_SLAUGHTER_CHARGE_REGEX = Pattern.compile("Your bracelet of slaughter has (\\d{1,2}) charge[s]? left.");
+	private static final Pattern CHAT_BRACELET_SLAUGHTER_CHARGE_REGEX = Pattern.compile("Your bracelet of slaughter has (\\d{1,2}) charges? left\\.");
 	private static final String CHAT_BRACELET_EXPEDITIOUS_CHARGE = "Your expeditious bracelet has ";
-	private static final Pattern CHAT_BRACELET_EXPEDITIOUS_CHARGE_REGEX = Pattern.compile("Your expeditious bracelet has (\\d{1,2}) charge[s]? left.");
+	private static final Pattern CHAT_BRACELET_EXPEDITIOUS_CHARGE_REGEX = Pattern.compile("Your expeditious bracelet has (\\d{1,2}) charges? left\\.");
 	private static final Pattern COMBAT_BRACELET_TASK_UPDATE_MESSAGE = Pattern.compile("^You still need to kill (\\d+) monsters to complete your current Slayer assignment");
 
 	//NPC messages
@@ -174,6 +181,10 @@ public class SlayerPlugin extends Plugin
 	@Getter(AccessLevel.PACKAGE)
 	private List<NPC> highlightedTargets = new ArrayList<>();
 
+	private final Set<NPC> taggedNpcs = new HashSet<>();
+	private int taggedNpcsDiedPrevTick;
+	private int taggedNpcsDiedThisTick;
+
 	@Getter(AccessLevel.PACKAGE)
 	@Setter(AccessLevel.PACKAGE)
 	private int amount;
@@ -202,7 +213,7 @@ public class SlayerPlugin extends Plugin
 	private int cachedXp = -1;
 	private Instant infoTimer;
 	private boolean loginFlag;
-	private List<String> targetNames = new ArrayList<>();
+	private final List<String> targetNames = new ArrayList<>();
 
 	@Override
 	protected void startUp() throws Exception
@@ -237,13 +248,14 @@ public class SlayerPlugin extends Plugin
 		overlayManager.remove(targetMinimapOverlay);
 		removeCounter();
 		highlightedTargets.clear();
+		taggedNpcs.clear();
 		cachedXp = -1;
 
 		chatCommandManager.unregisterCommand(TASK_COMMAND_STRING);
 	}
 
 	@Provides
-	SlayerConfig getConfig(ConfigManager configManager)
+	SlayerConfig provideSlayerConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(SlayerConfig.class);
 	}
@@ -260,6 +272,7 @@ public class SlayerPlugin extends Plugin
 				amount = 0;
 				loginFlag = true;
 				highlightedTargets.clear();
+				taggedNpcs.clear();
 				break;
 			case LOGGED_IN:
 				if (config.amount() != -1
@@ -299,6 +312,7 @@ public class SlayerPlugin extends Plugin
 	public void onNpcDespawned(NpcDespawned npcDespawned)
 	{
 		NPC npc = npcDespawned.getNpc();
+		taggedNpcs.remove(npc);
 		highlightedTargets.remove(npc);
 	}
 
@@ -391,6 +405,9 @@ public class SlayerPlugin extends Plugin
 				removeCounter();
 			}
 		}
+
+		taggedNpcsDiedPrevTick = taggedNpcsDiedThisTick;
+		taggedNpcsDiedThisTick = 0;
 	}
 
 	@Subscribe
@@ -433,6 +450,7 @@ public class SlayerPlugin extends Plugin
 			expeditiousChargeCount = Integer.parseInt(mExpeditious.group(1));
 			config.expeditious(expeditiousChargeCount);
 		}
+
 		if (chatMsg.startsWith(CHAT_BRACELET_SLAUGHTER_CHARGE))
 		{
 			Matcher mSlaughter = CHAT_BRACELET_SLAUGHTER_CHARGE_REGEX.matcher(chatMsg);
@@ -445,39 +463,29 @@ public class SlayerPlugin extends Plugin
 			config.slaughter(slaughterChargeCount);
 		}
 
-		if (chatMsg.endsWith("; return to a Slayer master."))
+		if (chatMsg.startsWith("You've completed") && (chatMsg.contains("Slayer master") || chatMsg.contains("Slayer Master")))
 		{
 			Matcher mComplete = CHAT_COMPLETE_MESSAGE.matcher(chatMsg);
 
-			List<String> matches = new ArrayList<>();
-			while (mComplete.find())
+			if (mComplete.find())
 			{
-				matches.add(mComplete.group(0).replaceAll(",", ""));
-			}
+				String mTasks = mComplete.group("tasks");
+				String mPoints = mComplete.group("points");
+				if (mPoints == null)
+				{
+					mPoints = mComplete.group("points2");
+				}
 
-			int streak = -1, points = -1;
-			switch (matches.size())
-			{
-				case 0:
-					streak = 1;
-					break;
-				case 1:
-					streak = Integer.parseInt(matches.get(0));
-					break;
-				case 3:
-					streak = Integer.parseInt(matches.get(0));
-					points = Integer.parseInt(matches.get(2));
-					break;
-				default:
-					log.warn("Unreachable default case for message ending in '; return to Slayer master'");
-			}
-			if (streak != -1)
-			{
-				config.streak(streak);
-			}
-			if (points != -1)
-			{
-				config.points(points);
+				if (mTasks != null)
+				{
+					int streak = Integer.parseInt(mTasks.replace(",", ""));
+					config.streak(streak);
+				}
+				if (mPoints != null)
+				{
+					int points = Integer.parseInt(mPoints.replace(",", ""));
+					config.points(points);
+				}
 			}
 
 			setTask("", 0, 0);
@@ -541,20 +549,49 @@ public class SlayerPlugin extends Plugin
 			return;
 		}
 
-		final Task task = Task.getTask(taskName);
-
-		// null tasks are technically valid, it only means they arent explicitly defined in the Task enum
-		// allow them through so that if there is a task capture failure the counter will still work
-		final int taskKillExp = task != null ? task.getExpectedKillExp() : 0;
-
-		// Only count exp gain as a kill if the task either has no expected exp for a kill, or if the exp gain is equal
-		// to the expected exp gain for the task.
-		if (taskKillExp == 0 || taskKillExp == slayerExp - cachedXp)
-		{
-			killedOne();
-		}
-
+		final int delta = slayerExp - cachedXp;
 		cachedXp = slayerExp;
+
+		log.debug("Slayer xp change delta: {}, killed npcs: {}", delta, taggedNpcsDiedPrevTick);
+
+		final Task task = Task.getTask(taskName);
+		if (task != null && task.getExpectedKillExp() > 0)
+		{
+			// Only decrement a kill if the xp drop matches the expected drop. This is just for Tzhaar tasks.
+			if (task.getExpectedKillExp() == delta)
+			{
+				killed(1);
+			}
+		}
+		else
+		{
+			// This is at least one kill, but if we observe multiple tagged NPCs dieing on the previous tick, count them
+			// instead.
+			killed(max(taggedNpcsDiedPrevTick, 1));
+		}
+	}
+
+	@Subscribe
+	public void onHitsplatApplied(HitsplatApplied hitsplatApplied)
+	{
+		Actor actor = hitsplatApplied.getActor();
+		Hitsplat hitsplat = hitsplatApplied.getHitsplat();
+		if (hitsplat.getHitsplatType() == Hitsplat.HitsplatType.DAMAGE_ME && highlightedTargets.contains(actor))
+		{
+			// If the actor is in highlightedTargets it must be an NPC and also a task assignment
+			taggedNpcs.add((NPC) actor);
+		}
+	}
+
+	@Subscribe
+	public void onActorDeath(ActorDeath actorDeath)
+	{
+		Actor actor = actorDeath.getActor();
+		if (taggedNpcs.contains(actor))
+		{
+			log.debug("Tagged NPC {} has died", actor.getName());
+			++taggedNpcsDiedThisTick;
+		}
 	}
 
 	@Subscribe
@@ -576,16 +613,17 @@ public class SlayerPlugin extends Plugin
 	}
 
 	@VisibleForTesting
-	void killedOne()
+	void killed(int amt)
 	{
 		if (amount == 0)
 		{
 			return;
 		}
 
-		amount--;
+		amount -= amt;
 		if (doubleTroubleExtraKill())
 		{
+			assert amt == 1;
 			amount--;
 		}
 
@@ -683,7 +721,7 @@ public class SlayerPlugin extends Plugin
 	{
 		taskName = name;
 		amount = amt;
-		initialAmount = initAmt;
+		initialAmount = Math.max(amt, initAmt);
 		taskLocation = location;
 		save();
 		removeCounter();

@@ -173,9 +173,21 @@ public class ChatFilterPlugin extends Plugin
 			case PRIVATECHAT:
 			case MODPRIVATECHAT:
 			case FRIENDSCHAT:
-				if (shouldFilterPlayerMessage(name))
+				if (shouldFilterPlayerMessage(Text.removeTags(name)))
 				{
 					message = censorMessage(name, message);
+					blockMessage = message == null;
+				}
+				break;
+			case GAMEMESSAGE:
+			case ENGINE:
+			case ITEM_EXAMINE:
+			case NPC_EXAMINE:
+			case OBJECT_EXAMINE:
+			case SPAM:
+				if (config.filterGameChat())
+				{
+					message = censorMessage(null, message);
 					blockMessage = message == null;
 				}
 				break;
@@ -269,7 +281,7 @@ public class ChatFilterPlugin extends Plugin
 	{
 		String strippedMessage = jagexPrintableCharMatcher.retainFrom(message)
 			.replace('\u00A0', ' ');
-		if (shouldFilterByName(username))
+		if (username != null && shouldFilterByName(username))
 		{
 			switch (config.filterType())
 			{

@@ -28,26 +28,25 @@ package net.runelite.client.plugins.chatfilter;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.ConfigSection;
 
 @ConfigGroup("chatfilter")
 public interface ChatFilterConfig extends Config
 {
-	@ConfigItem(
-		keyName = "filterType",
-		name = "Filter type",
-		description = "Configures how the messages are filtered",
-		position = 1
+	@ConfigSection(
+		name = "Filter Lists",
+		description = "Custom Word, Regex, and Username filter lists",
+		position = 0,
+		closedByDefault = true
 	)
-	default ChatFilterType filterType()
-	{
-		return ChatFilterType.CENSOR_WORDS;
-	}
+	String filterLists = "filterLists";
 
 	@ConfigItem(
 		keyName = "filteredWords",
 		name = "Filtered Words",
 		description = "List of filtered words, separated by commas",
-		position = 2
+		position = 1,
+		section = filterLists
 	)
 	default String filteredWords()
 	{
@@ -58,7 +57,8 @@ public interface ChatFilterConfig extends Config
 		keyName = "filteredRegex",
 		name = "Filtered Regex",
 		description = "List of regular expressions to filter, one per line",
-		position = 3
+		position = 2,
+		section = filterLists
 	)
 	default String filteredRegex()
 	{
@@ -69,11 +69,23 @@ public interface ChatFilterConfig extends Config
 		keyName = "filteredNames",
 		name = "Filtered Names",
 		description = "List of filtered names, one per line. Accepts regular expressions",
-		position = 4
+		position = 3,
+		section = filterLists
 	)
 	default String filteredNames()
 	{
 		return "";
+	}
+
+	@ConfigItem(
+		keyName = "filterType",
+		name = "Filter type",
+		description = "Configures how the messages are filtered",
+		position = 4
+	)
+	default ChatFilterType filterType()
+	{
+		return ChatFilterType.CENSOR_WORDS;
 	}
 
 	@ConfigItem(
@@ -110,6 +122,17 @@ public interface ChatFilterConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "filterGameChat",
+		name = "Filter Game Chat",
+		description = "Filter your game chat messages",
+		position = 8
+	)
+	default boolean filterGameChat()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "collapseGameChat",
 		name = "Collapse Game Chat",
 		description = "Collapse duplicate game chat messages into a single line",
@@ -133,7 +156,7 @@ public interface ChatFilterConfig extends Config
 
 	@ConfigItem(
 		keyName = "maxRepeatedPublicChats",
-		name = "Max repeated public chats",
+		name = "Repeat filter",
 		description = "Block player chat message if repeated this many times. 0 is off",
 		position = 11
 	)

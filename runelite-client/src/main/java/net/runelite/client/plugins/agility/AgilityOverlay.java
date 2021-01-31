@@ -45,6 +45,7 @@ import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayUtil;
+import net.runelite.client.util.ColorUtil;
 
 class AgilityOverlay extends Overlay
 {
@@ -78,7 +79,9 @@ class AgilityOverlay extends Overlay
 		{
 			if (Obstacles.SHORTCUT_OBSTACLE_IDS.containsKey(object.getId()) && !config.highlightShortcuts() ||
 					Obstacles.TRAP_OBSTACLE_IDS.contains(object.getId()) && !config.showTrapOverlay() ||
-					Obstacles.COURSE_OBSTACLE_IDS.contains(object.getId()) && !config.showClickboxes())
+					Obstacles.COURSE_OBSTACLE_IDS.contains(object.getId()) && !config.showClickboxes() ||
+					Obstacles.SEPULCHRE_OBSTACLE_IDS.contains(object.getId()) && !config.highlightSepulchreObstacles() ||
+					Obstacles.SEPULCHRE_SKILL_OBSTACLE_IDS.contains(object.getId()) && !config.highlightSepulchreSkilling())
 			{
 				return;
 			}
@@ -107,9 +110,16 @@ class AgilityOverlay extends Overlay
 						configColor = config.getMarkColor();
 					}
 
-					if (config.highlightPortals() && Obstacles.PORTAL_OBSTACLE_IDS.contains(object.getId()))
+					if (Obstacles.PORTAL_OBSTACLE_IDS.contains(object.getId()))
 					{
-						configColor = config.getPortalsColor();
+						if (config.highlightPortals())
+						{
+							configColor = config.getPortalsColor();
+						}
+						else
+						{
+							return;
+						}
 					}
 
 					if (objectClickbox.contains(mousePosition.getX(), mousePosition.getY()))
@@ -122,11 +132,10 @@ class AgilityOverlay extends Overlay
 					}
 
 					graphics.draw(objectClickbox);
-					graphics.setColor(new Color(configColor.getRed(), configColor.getGreen(), configColor.getBlue(), 50));
+					graphics.setColor(ColorUtil.colorWithAlpha(configColor, configColor.getAlpha() / 5));
 					graphics.fill(objectClickbox);
 				}
 			}
-
 		});
 
 		if (config.highlightMarks() && !marksOfGrace.isEmpty())
