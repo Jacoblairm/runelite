@@ -59,7 +59,6 @@ import net.runelite.api.events.ChatMessage;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.events.MenuEntryAdded;
-import net.runelite.api.events.PlayerMenuOptionClicked;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.chat.ChatColorType;
@@ -290,8 +289,12 @@ public class BASPlugin extends Plugin implements KeyListener
 	}
 
 	@Subscribe
-	public void onPlayerMenuOptionClicked(PlayerMenuOptionClicked event)
+	public void onMenuOptionClicked(MenuOptionClicked  event)
 	{
+		if(event.getMenuOption().equals("Next-customer"))
+		{
+			getNextCustomer();
+		}
 
 		if(BAS_BUY_OPTIONS.contains(event.getMenuOption()))
 		{
@@ -343,15 +346,6 @@ public class BASPlugin extends Plugin implements KeyListener
 				.runeLiteFormattedMessage(chatMessage)
 				.build());
 
-	}
-
-	@Subscribe
-	public void onMenuOptionClicked(MenuOptionClicked event)
-	{
-		if(event.getMenuOption().equals("Next-customer"))
-		{
-			getNextCustomer();
-		}
 	}
 
 	private boolean updatedClient() throws IOException
