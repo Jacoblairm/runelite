@@ -290,7 +290,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	}
 
 	@Subscribe
-	public void PlayerMenuOptionClicked(MenuOptionClicked event)
+	public void MenuOptionClicked(MenuOptionClicked event)
 	{
 
 		if(BAS_BUY_OPTIONS.contains(event.getMenuOption()))
