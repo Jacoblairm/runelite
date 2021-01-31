@@ -290,8 +290,12 @@ public class BASPlugin extends Plugin implements KeyListener
 	}
 
 	@Subscribe
-	public void MenuOptionClicked(MenuOptionClicked event)
+	public void onMenuOptionClicked(MenuOptionClicked  event)
 	{
+		if(event.getMenuOption().equals("Next-customer"))
+		{
+			getNextCustomer();
+		}
 
 		if(BAS_BUY_OPTIONS.contains(event.getMenuOption()))
 		{
@@ -343,15 +347,6 @@ public class BASPlugin extends Plugin implements KeyListener
 				.runeLiteFormattedMessage(chatMessage)
 				.build());
 
-	}
-
-	@Subscribe
-	public void onMenuOptionClicked(MenuOptionClicked event)
-	{
-		if(event.getMenuOption().equals("Next-customer"))
-		{
-			getNextCustomer();
-		}
 	}
 
 	private boolean updatedClient() throws IOException
