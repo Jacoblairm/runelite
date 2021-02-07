@@ -263,6 +263,7 @@ public class BASPlugin extends Plugin implements KeyListener
 			}
 			else if(config.addToQueue() && !ccMembersList.contains(Text.removeTags(Text.sanitize(event.getTarget()))) && shiftDown)
 			{
+				log.info(ccMembersList.toString());
 				for (String basOption : BAS_BUY_OPTIONS)
 				{
 					if(
@@ -289,8 +290,9 @@ public class BASPlugin extends Plugin implements KeyListener
 	}
 
 	@Subscribe
-	public void onMenuOptionClicked(MenuOptionClicked  event)
+	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
+		String targetSanitized = Text.removeTags(Text.sanitize(event.getMenuTarget()));
 		if(event.getMenuOption().equals("Next-customer"))
 		{
 			getNextCustomer();
@@ -298,7 +300,7 @@ public class BASPlugin extends Plugin implements KeyListener
 
 		if(BAS_BUY_OPTIONS.contains(event.getMenuOption()))
 		{
-			addCustomerToQueue(event.getMenuTarget(), event.getMenuOption());
+			addCustomerToQueue(targetSanitized, event.getMenuOption());
 		}
 
 		if(!BAS_OPTIONS.contains(event.getMenuOption()))
