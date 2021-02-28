@@ -311,7 +311,7 @@ public class BASPlugin extends Plugin implements KeyListener
 
 		if(event.getMenuOption().equals(GET_CUSTOMER_ID))
 		{
-			getCustomerID(event.getMenuTarget());
+			getCustomerID(targetSanitized);
 			return;
 		}
 
@@ -321,25 +321,25 @@ public class BASPlugin extends Plugin implements KeyListener
 		{
 			case MARK_INPROGRESS:
 				appendMessage = "in progress.";
-				markCustomer(1, event.getMenuTarget());
+				markCustomer(1, targetSanitized);
 				break;
 			case MARK_DONE:
 				appendMessage = "done.";
-				markCustomer(2, event.getMenuTarget());
+				markCustomer(2, targetSanitized);
 				break;
 			case MARK_NOTINPROGRESS:
 				appendMessage = "online.";
-				markCustomer(3, event.getMenuTarget());
+				markCustomer(3, targetSanitized);
 				break;
 			case MARK_START_COOLDOWN:
 				appendMessage = "start cooldown.";
-				markCustomer(4, event.getMenuTarget());
+				markCustomer(4, targetSanitized);
 				break;
 		}
 
 		final String chatMessage = new ChatMessageBuilder()
 				.append(ChatColorType.NORMAL)
-				.append("Marked " + event.getMenuTarget() + " as ")
+				.append("Marked " + targetSanitized + " as ")
 				.append(ChatColorType.HIGHLIGHT)
 				.append(appendMessage)
 				.build();
