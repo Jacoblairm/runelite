@@ -263,6 +263,7 @@ public class BASPlugin extends Plugin implements KeyListener
 			}
 			else if(config.addToQueue() && !ccMembersList.contains(Text.removeTags(Text.sanitize(event.getTarget()))) && shiftDown)
 			{
+				log.info(ccMembersList.toString());
 				for (String basOption : BAS_BUY_OPTIONS)
 				{
 					if(
@@ -289,8 +290,9 @@ public class BASPlugin extends Plugin implements KeyListener
 	}
 
 	@Subscribe
-	public void onMenuOptionClicked(MenuOptionClicked  event)
+	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
+		String targetSanitized = Text.removeTags(Text.sanitize(event.getMenuTarget()));
 		if(event.getMenuOption().equals("Next-customer"))
 		{
 			getNextCustomer();
@@ -298,7 +300,7 @@ public class BASPlugin extends Plugin implements KeyListener
 
 		if(BAS_BUY_OPTIONS.contains(event.getMenuOption()))
 		{
-			addCustomerToQueue(event.getMenuTarget(), event.getMenuOption());
+			addCustomerToQueue(targetSanitized, event.getMenuOption());
 		}
 
 		if(!BAS_OPTIONS.contains(event.getMenuOption()))
@@ -308,7 +310,7 @@ public class BASPlugin extends Plugin implements KeyListener
 
 		if(event.getMenuOption().equals(GET_CUSTOMER_ID))
 		{
-			getCustomerID(event.getMenuTarget());
+			getCustomerID(targetSanitized);
 			return;
 		}
 
@@ -318,25 +320,25 @@ public class BASPlugin extends Plugin implements KeyListener
 		{
 			case MARK_INPROGRESS:
 				appendMessage = "in progress.";
-				markCustomer(1, event.getMenuTarget());
+				markCustomer(1, targetSanitized);
 				break;
 			case MARK_DONE:
 				appendMessage = "done.";
-				markCustomer(2, event.getMenuTarget());
+				markCustomer(2, targetSanitized);
 				break;
 			case MARK_NOTINPROGRESS:
 				appendMessage = "online.";
-				markCustomer(3, event.getMenuTarget());
+				markCustomer(3, targetSanitized);
 				break;
 			case MARK_START_COOLDOWN:
 				appendMessage = "start cooldown.";
-				markCustomer(4, event.getMenuTarget());
+				markCustomer(4, targetSanitized);
 				break;
 		}
 
 		final String chatMessage = new ChatMessageBuilder()
 				.append(ChatColorType.NORMAL)
-				.append("Marked " + event.getMenuTarget() + " as ")
+				.append("Marked " + targetSanitized + " as ")
 				.append(ChatColorType.HIGHLIGHT)
 				.append(appendMessage)
 				.build();
