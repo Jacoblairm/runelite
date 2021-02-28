@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Infinitay <https://github.com/Infinitay>
+ * Copyright (c) 2021 Abex
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,32 +22,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.kingdomofmiscellania;
 
-import java.awt.image.BufferedImage;
-import net.runelite.client.ui.overlay.infobox.Counter;
-import net.runelite.client.util.QuantityFormatter;
+import java.util.function.Consumer;
+import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.ConfigManager;
+import org.slf4j.Logger;
 
-public class KingdomCounter extends Counter
+import java.util.*;
+import java.util.stream.*;
+import net.runelite.api.*;
+import net.runelite.api.coords.*;
+import net.runelite.api.events.*;
+import net.runelite.api.widgets.*;
+import net.runelite.client.events.*;
+import net.runelite.client.game.*;
+
+var $PANEL = net.runelite.jshell.ShellPanel.INSTANCE;
+Logger log = $PANEL.getShellLogger();
+
+static <T> T inject(Class<T> clazz)
 {
-	private final KingdomPlugin plugin;
-
-	KingdomCounter(BufferedImage image, KingdomPlugin plugin)
-	{
-		super(image, plugin, plugin.getApproval());
-		this.plugin = plugin;
-	}
-
-	@Override
-	public String getText()
-	{
-		return KingdomPlugin.getApprovalPercent(plugin.getApproval()) + "%";
-	}
-
-	@Override
-	public String getTooltip()
-	{
-		return "Approval: " + plugin.getApproval() + "/" + KingdomPlugin.MAX_APPROVAL + "</br>"
-			+ "Coffer: " + QuantityFormatter.quantityToStackSize(plugin.getCoffer());
-	}
+	return $PANEL.inject(clazz);
 }
+
+static void cleanup(Runnable r)
+{
+	$PANEL.cleanup(r);
+}
+
+var $EVENT_BUS = inject(net.runelite.client.eventbus.EventBus.class);
+static <T> void subscribe(Class<T> eventType, Consumer<T> subscriber, float priority)
+{
+	var sub = $EVENT_BUS.register(eventType, subscriber, priority);
+	cleanup(() -> $EVENT_BUS.unregister(sub));
+}
+static <T> void subscribe(Class<T> eventType, Consumer<T> subscriber)
+{
+	var sub = $EVENT_BUS.register(eventType, subscriber, 0.f);
+	cleanup(() -> $EVENT_BUS.unregister(sub));
+}
+
+var client = inject(Client.class);
+var clientThread = inject(ClientThread.class);
+var configManager = inject(ConfigManager.class);
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Infinitay <https://github.com/Infinitay>
+ * Copyright (c) 2021 Abex
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,32 +22,29 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.kingdomofmiscellania;
+package net.runelite.jshell;
 
-import java.awt.image.BufferedImage;
-import net.runelite.client.ui.overlay.infobox.Counter;
-import net.runelite.client.util.QuantityFormatter;
+import java.util.Map;
+import jdk.jshell.execution.DirectExecutionControl;
+import jdk.jshell.spi.ExecutionControl;
+import jdk.jshell.spi.ExecutionControlProvider;
+import jdk.jshell.spi.ExecutionEnv;
 
-public class KingdomCounter extends Counter
+public class RLShellExecutionControl extends DirectExecutionControl implements ExecutionControlProvider
 {
-	private final KingdomPlugin plugin;
-
-	KingdomCounter(BufferedImage image, KingdomPlugin plugin)
+	public RLShellExecutionControl()
 	{
-		super(image, plugin, plugin.getApproval());
-		this.plugin = plugin;
 	}
 
 	@Override
-	public String getText()
+	public String name()
 	{
-		return KingdomPlugin.getApprovalPercent(plugin.getApproval()) + "%";
+		return getClass().getName();
 	}
 
 	@Override
-	public String getTooltip()
+	public ExecutionControl generate(ExecutionEnv env, Map<String, String> parameters) throws Throwable
 	{
-		return "Approval: " + plugin.getApproval() + "/" + KingdomPlugin.MAX_APPROVAL + "</br>"
-			+ "Coffer: " + QuantityFormatter.quantityToStackSize(plugin.getCoffer());
+		return this;
 	}
 }

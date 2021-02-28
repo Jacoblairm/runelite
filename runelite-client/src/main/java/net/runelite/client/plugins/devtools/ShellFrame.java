@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Infinitay <https://github.com/Infinitay>
+ * Copyright (c) 2021 Abex
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,32 +22,49 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.kingdomofmiscellania;
+package net.runelite.client.plugins.devtools;
 
-import java.awt.image.BufferedImage;
-import net.runelite.client.ui.overlay.infobox.Counter;
-import net.runelite.client.util.QuantityFormatter;
+import java.util.concurrent.ScheduledExecutorService;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import net.runelite.client.RuneLite;
+import net.runelite.client.callback.ClientThread;
+import net.runelite.jshell.ShellPanel;
 
-public class KingdomCounter extends Counter
+@Singleton
+class ShellFrame extends DevToolsFrame
 {
-	private final KingdomPlugin plugin;
+	private final ShellPanel shellPanel;
 
-	KingdomCounter(BufferedImage image, KingdomPlugin plugin)
+	@Inject
+	ShellFrame(ClientThread clientThread, ScheduledExecutorService executor)
 	{
-		super(image, plugin, plugin.getApproval());
-		this.plugin = plugin;
+		this.shellPanel = new ShellPanel(executor)
+		{
+			@Override
+			protected void invokeOnClientThread(Runnable r)
+			{
+				clientThread.invoke(r);
+			}
+		};
+		setContentPane(shellPanel);
+
+		setTitle("RuneLite Shell");
+
+		pack();
 	}
 
 	@Override
-	public String getText()
+	public void open()
 	{
-		return KingdomPlugin.getApprovalPercent(plugin.getApproval()) + "%";
+		shellPanel.switchContext(RuneLite.getInjector());
+		super.open();
 	}
 
 	@Override
-	public String getTooltip()
+	public void close()
 	{
-		return "Approval: " + plugin.getApproval() + "/" + KingdomPlugin.MAX_APPROVAL + "</br>"
-			+ "Coffer: " + QuantityFormatter.quantityToStackSize(plugin.getCoffer());
+		super.close();
+		shellPanel.freeContext();
 	}
 }
