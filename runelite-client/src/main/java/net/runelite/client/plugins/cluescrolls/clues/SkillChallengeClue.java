@@ -87,7 +87,8 @@ public class SkillChallengeClue extends ClueScroll implements NpcClueScroll, Nam
 		item(ItemID.INFERNAL_PICKAXE_UNCHARGED_25369),
 		item(ItemID.GILDED_PICKAXE),
 		item(ItemID._3RD_AGE_PICKAXE),
-		item(ItemID.CRYSTAL_PICKAXE)
+		item(ItemID.CRYSTAL_PICKAXE),
+		item(ItemID.CRYSTAL_PICKAXE_INACTIVE)
 	);
 
 	private static final AnyRequirementCollection ANY_AXE = any("Any Axe",
@@ -106,7 +107,8 @@ public class SkillChallengeClue extends ClueScroll implements NpcClueScroll, Nam
 		item(ItemID.INFERNAL_AXE_UNCHARGED_25371),
 		item(ItemID.GILDED_AXE),
 		item(ItemID._3RD_AGE_AXE),
-		item(ItemID.CRYSTAL_AXE)
+		item(ItemID.CRYSTAL_AXE),
+		item(ItemID.CRYSTAL_AXE_INACTIVE)
 	);
 
 	private static final AnyRequirementCollection ANY_HARPOON = any("Harpoon",
@@ -118,7 +120,8 @@ public class SkillChallengeClue extends ClueScroll implements NpcClueScroll, Nam
 		item(ItemID.INFERNAL_HARPOON_OR),
 		item(ItemID.INFERNAL_HARPOON_UNCHARGED),
 		item(ItemID.INFERNAL_HARPOON_UNCHARGED_25367),
-		item(ItemID.CRYSTAL_HARPOON)
+		item(ItemID.CRYSTAL_HARPOON),
+		item(ItemID.CRYSTAL_HARPOON_INACTIVE)
 	);
 
 	private static final Set<SkillChallengeClue> CLUES = ImmutableSet.of(
@@ -146,7 +149,7 @@ public class SkillChallengeClue extends ClueScroll implements NpcClueScroll, Nam
 		new SkillChallengeClue("Steal from a chest in Ardougne Castle."),
 		new SkillChallengeClue("Craft a green dragonhide body.", xOfItem(ItemID.GREEN_DRAGON_LEATHER, 3), item(ItemID.NEEDLE), item(ItemID.THREAD)),
 		new SkillChallengeClue("String a yew longbow.", item(ItemID.YEW_LONGBOW_U), item(ItemID.BOW_STRING)),
-		new SkillChallengeClue("Kill a Dust Devil.", "slay a dust devil.", true, any("Facemask or Slayer Helmet", item(ItemID.FACEMASK), item(ItemID.SLAYER_HELMET), item(ItemID. SLAYER_HELMET_I), item(ItemID. BLACK_SLAYER_HELMET), item(ItemID. BLACK_SLAYER_HELMET_I), item(ItemID. PURPLE_SLAYER_HELMET), item(ItemID. PURPLE_SLAYER_HELMET_I), item(ItemID. RED_SLAYER_HELMET), item(ItemID. RED_SLAYER_HELMET_I), item(ItemID.GREEN_SLAYER_HELMET), item(ItemID. GREEN_SLAYER_HELMET_I), item(ItemID. TURQUOISE_SLAYER_HELMET), item(ItemID. TURQUOISE_SLAYER_HELMET_I), item(ItemID. HYDRA_SLAYER_HELMET), item(ItemID. HYDRA_SLAYER_HELMET_I))),
+		new SkillChallengeClue("Kill a Dust Devil.", "slay a dust devil.", true, any("Facemask or Slayer Helmet", item(ItemID.FACEMASK), item(ItemID.SLAYER_HELMET), item(ItemID. SLAYER_HELMET_I), item(ItemID. BLACK_SLAYER_HELMET), item(ItemID. BLACK_SLAYER_HELMET_I), item(ItemID. PURPLE_SLAYER_HELMET), item(ItemID. PURPLE_SLAYER_HELMET_I), item(ItemID. RED_SLAYER_HELMET), item(ItemID. RED_SLAYER_HELMET_I), item(ItemID.GREEN_SLAYER_HELMET), item(ItemID. GREEN_SLAYER_HELMET_I), item(ItemID. TURQUOISE_SLAYER_HELMET), item(ItemID. TURQUOISE_SLAYER_HELMET_I), item(ItemID. HYDRA_SLAYER_HELMET), item(ItemID. HYDRA_SLAYER_HELMET_I), item(ItemID.TWISTED_SLAYER_HELMET), item(ItemID.TWISTED_SLAYER_HELMET_I), item(ItemID.SLAYER_HELMET_I_25177), item(ItemID.BLACK_SLAYER_HELMET_I_25179), item(ItemID.GREEN_SLAYER_HELMET_I_25181), item(ItemID.RED_SLAYER_HELMET_I_25183), item(ItemID.PURPLE_SLAYER_HELMET_I_25185), item(ItemID.TURQUOISE_SLAYER_HELMET_I_25187), item(ItemID.HYDRA_SLAYER_HELMET_I_25189), item(ItemID.TWISTED_SLAYER_HELMET_I_25191))),
 		new SkillChallengeClue("Catch a black warlock.", item(ItemID.BUTTERFLY_JAR), any("Butterfly Net", item(ItemID.BUTTERFLY_NET), item(ItemID.MAGIC_BUTTERFLY_NET))),
 		new SkillChallengeClue("Catch a red chinchompa.", item(ItemID.BOX_TRAP)),
 		new SkillChallengeClue("Mine a mithril ore.", ANY_PICKAXE),
@@ -159,7 +162,7 @@ public class SkillChallengeClue extends ClueScroll implements NpcClueScroll, Nam
 		new SkillChallengeClue("Craft multiple cosmic runes from a single essence.", item(ItemID.PURE_ESSENCE)),
 		new SkillChallengeClue("Plant a watermelon seed.", item(ItemID.RAKE), item(ItemID.SEED_DIBBER), xOfItem(ItemID.WATERMELON_SEED, 3)),
 		new SkillChallengeClue("Activate the Chivalry prayer."),
-		new SkillChallengeClue("Hand in a Tier 2 or higher set of Shayzien supply armour", "take the lovakengj armourers a boxed set of shayzien supply armour at tier 2 or above.", any("Shayzien Supply Set (Tier 2 or higher)", item(ItemID.SHAYZIEN_SUPPLY_SET_2), item(ItemID.SHAYZIEN_SUPPLY_SET_3), item(ItemID.SHAYZIEN_SUPPLY_SET_4), item(ItemID.SHAYZIEN_SUPPLY_SET_5))),
+		new SkillChallengeClue("Hand in a Tier 2 or higher set of Shayzien supply armour. (Requires 11 lovakite bars)", "take the lovakengj armourers a boxed set of shayzien supply armour at tier 2 or above.", any("Shayzien Supply Set (Tier 2 or higher)", item(ItemID.SHAYZIEN_SUPPLY_SET_2), item(ItemID.SHAYZIEN_SUPPLY_SET_3), item(ItemID.SHAYZIEN_SUPPLY_SET_4), item(ItemID.SHAYZIEN_SUPPLY_SET_5))),
 		// Master Sherlock Tasks
 		new SkillChallengeClue("Equip an abyssal whip in front of the abyssal demons of the Slayer Tower.", true, any("Abyssal Whip", item(ItemID.ABYSSAL_WHIP), item(ItemID.FROZEN_ABYSSAL_WHIP), item(ItemID.VOLCANIC_ABYSSAL_WHIP))),
 		new SkillChallengeClue("Smith a runite med helm.", item(ItemID.HAMMER), item(ItemID.RUNITE_BAR)),
@@ -179,7 +182,12 @@ public class SkillChallengeClue extends ClueScroll implements NpcClueScroll, Nam
 				any("", item(ItemID.GRACEFUL_GLOVES), item(ItemID.GRACEFUL_GLOVES_11859), item(ItemID.GRACEFUL_GLOVES_13587), item(ItemID.GRACEFUL_GLOVES_13588), item(ItemID.GRACEFUL_GLOVES_13599), item(ItemID.GRACEFUL_GLOVES_13600), item(ItemID.GRACEFUL_GLOVES_13611), item(ItemID.GRACEFUL_GLOVES_13612), item(ItemID.GRACEFUL_GLOVES_13623), item(ItemID.GRACEFUL_GLOVES_13624), item(ItemID.GRACEFUL_GLOVES_13635), item(ItemID.GRACEFUL_GLOVES_13636), item(ItemID.GRACEFUL_GLOVES_13675), item(ItemID.GRACEFUL_GLOVES_13676), item(ItemID.GRACEFUL_GLOVES_21073), item(ItemID.GRACEFUL_GLOVES_21075), item(ItemID.GRACEFUL_GLOVES_24755), item(ItemID.GRACEFUL_GLOVES_24757), item(ItemID.GRACEFUL_GLOVES_25081), item(ItemID.GRACEFUL_GLOVES_25083)),
 				any("", item(ItemID.GRACEFUL_BOOTS), item(ItemID.GRACEFUL_BOOTS_11861), item(ItemID.GRACEFUL_BOOTS_13589), item(ItemID.GRACEFUL_BOOTS_13590), item(ItemID.GRACEFUL_BOOTS_13601), item(ItemID.GRACEFUL_BOOTS_13602), item(ItemID.GRACEFUL_BOOTS_13613), item(ItemID.GRACEFUL_BOOTS_13614), item(ItemID.GRACEFUL_BOOTS_13625), item(ItemID.GRACEFUL_BOOTS_13626), item(ItemID.GRACEFUL_BOOTS_13637), item(ItemID.GRACEFUL_BOOTS_13638), item(ItemID.GRACEFUL_BOOTS_13677), item(ItemID.GRACEFUL_BOOTS_13678), item(ItemID.GRACEFUL_BOOTS_21076), item(ItemID.GRACEFUL_BOOTS_21078), item(ItemID.GRACEFUL_BOOTS_24758), item(ItemID.GRACEFUL_BOOTS_24760), item(ItemID.GRACEFUL_BOOTS_25084), item(ItemID.GRACEFUL_BOOTS_25086)))),
 		new SkillChallengeClue("Mix an anti-venom potion.", item(ItemID.ANTIDOTE4_5952), xOfItem(ItemID.ZULRAHS_SCALES, 20)),
-		new SkillChallengeClue("Mine a piece of Runite ore", "mine a piece of runite ore whilst sporting the finest mining gear.", true, ANY_PICKAXE, all("Prospector kit", item(ItemID.PROSPECTOR_HELMET), any("", item(ItemID.PROSPECTOR_JACKET), item(ItemID.VARROCK_ARMOUR_4)), item(ItemID.PROSPECTOR_LEGS), item(ItemID.PROSPECTOR_BOOTS))),
+		new SkillChallengeClue("Mine a piece of Runite ore", "mine a piece of runite ore whilst sporting the finest mining gear.", true, ANY_PICKAXE,
+			all("Prospector kit",
+				any("", item(ItemID.PROSPECTOR_HELMET), item(ItemID.GOLDEN_PROSPECTOR_HELMET)),
+				any("", item(ItemID.PROSPECTOR_JACKET), item(ItemID.VARROCK_ARMOUR_4), item(ItemID.GOLDEN_PROSPECTOR_JACKET)),
+				any("", item(ItemID.PROSPECTOR_LEGS), item(ItemID.GOLDEN_PROSPECTOR_LEGS)),
+				any("", item(ItemID.PROSPECTOR_BOOTS), item(ItemID.GOLDEN_PROSPECTOR_BOOTS)))),
 		new SkillChallengeClue("Steal a gem from the Ardougne market."),
 		new SkillChallengeClue("Pickpocket an elf."),
 		new SkillChallengeClue("Bind a blood rune at the blood altar.", item(ItemID.DARK_ESSENCE_FRAGMENTS)),
@@ -188,11 +196,19 @@ public class SkillChallengeClue extends ClueScroll implements NpcClueScroll, Nam
 		new SkillChallengeClue("Cremate a set of fiyr remains.", any("Magic or Redwood Pyre Logs", item(ItemID.MAGIC_PYRE_LOGS), item(ItemID.REDWOOD_PYRE_LOGS)), item(ItemID.TINDERBOX), item(ItemID.FIYR_REMAINS)),
 		new SkillChallengeClue("Dissect a sacred eel.", item(ItemID.KNIFE), any("Fishing rod", item(ItemID.FISHING_ROD), item(ItemID.PEARL_FISHING_ROD)), item(ItemID.FISHING_BAIT)),
 		new SkillChallengeClue("Kill a lizardman shaman."),
-		new SkillChallengeClue("Catch an Anglerfish.", "angle for an anglerfish whilst sporting the finest fishing gear.", true, any("Fishing rod", item(ItemID.FISHING_ROD), item(ItemID.PEARL_FISHING_ROD)), item(ItemID.SANDWORMS), all("Angler's outfit", item(ItemID.ANGLER_HAT), item(ItemID.ANGLER_TOP), item(ItemID.ANGLER_WADERS), item(ItemID.ANGLER_BOOTS))),
+		new SkillChallengeClue("Catch an Anglerfish.", "angle for an anglerfish whilst sporting the finest fishing gear.", true, any("Fishing rod", item(ItemID.FISHING_ROD), item(ItemID.PEARL_FISHING_ROD)), item(ItemID.SANDWORMS),
+			all("Angler's outfit",
+				any("", item(ItemID.ANGLER_HAT), item(ItemID.SPIRIT_ANGLER_HEADBAND)),
+				any("", item(ItemID.ANGLER_TOP), item(ItemID.SPIRIT_ANGLER_TOP)),
+				any("", item(ItemID.ANGLER_WADERS), item(ItemID.SPIRIT_ANGLER_WADERS)),
+				any("", item(ItemID.ANGLER_BOOTS), item(ItemID.SPIRIT_ANGLER_BOOTS)))),
 		new SkillChallengeClue("Chop a redwood log.", "chop a redwood log whilst sporting the finest lumberjack gear.", true, ANY_AXE, all("Lumberjack outfit", item(ItemID.LUMBERJACK_HAT), item(ItemID.LUMBERJACK_TOP), item(ItemID.LUMBERJACK_LEGS), item(ItemID.LUMBERJACK_BOOTS))),
 		new SkillChallengeClue("Craft a light orb in the Dorgesh-Kaan bank.", item(ItemID.CAVE_GOBLIN_WIRE), item(ItemID.EMPTY_LIGHT_ORB)),
-		new SkillChallengeClue("Kill a reanimated Abyssal Demon.", "kill a reanimated abyssal.", xOfItem(ItemID.SOUL_RUNE, 4), xOfItem(ItemID.BLOOD_RUNE, 1), any("Nature Rune x4", xOfItem(ItemID.NATURE_RUNE, 4), item(ItemID.BRYOPHYTAS_STAFF)), range("Ensouled abyssal head", ItemID.ENSOULED_ABYSSAL_HEAD, ItemID.ENSOULED_ABYSSAL_HEAD_13508)),
-		new SkillChallengeClue("Kill a Fiyr shade inside Mort'tons shade catacombs.", any("Any Silver Shade Key",  item(ItemID.SILVER_KEY_RED), item(ItemID.SILVER_KEY_BROWN), item(ItemID.SILVER_KEY_CRIMSON), item(ItemID.SILVER_KEY_BLACK), item(ItemID.SILVER_KEY_PURPLE)))
+		new SkillChallengeClue("Kill a reanimated Abyssal Demon.", "kill a reanimated abyssal.", xOfItem(ItemID.SOUL_RUNE, 4), xOfItem(ItemID.BLOOD_RUNE, 2), any("Nature Rune x4", xOfItem(ItemID.NATURE_RUNE, 4), item(ItemID.BRYOPHYTAS_STAFF)), range("Ensouled abyssal head", ItemID.ENSOULED_ABYSSAL_HEAD, ItemID.ENSOULED_ABYSSAL_HEAD_13508)),
+		new SkillChallengeClue("Kill a Fiyr shade inside Mort'tons shade catacombs.",
+			any("Any Gold or Silver Shade Key",
+				item(ItemID.GOLD_KEY_RED), item(ItemID.GOLD_KEY_BROWN), item(ItemID.GOLD_KEY_CRIMSON), item(ItemID.GOLD_KEY_BLACK), item(ItemID.GOLD_KEY_PURPLE),
+				item(ItemID.SILVER_KEY_RED), item(ItemID.SILVER_KEY_BROWN), item(ItemID.SILVER_KEY_CRIMSON), item(ItemID.SILVER_KEY_BLACK), item(ItemID.SILVER_KEY_PURPLE)))
 	);
 
 	private final ChallengeType type;

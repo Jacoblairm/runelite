@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import lombok.AccessLevel;
@@ -53,6 +54,7 @@ import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.chatbox.ChatboxPanelManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -189,7 +191,14 @@ public class GroundMarkerPlugin extends Plugin
 	{
 		overlayManager.add(overlay);
 		overlayManager.add(minimapOverlay);
-		sharingManager.addMenuOptions();
+		if (config.showImportExport())
+		{
+			sharingManager.addImportExportMenuOptions();
+		}
+		if (config.showClear())
+		{
+			sharingManager.addClearMenuOption();
+		}
 		loadPoints();
 		eventBus.register(sharingManager);
 	}
@@ -279,6 +288,27 @@ public class GroundMarkerPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (event.getGroup().equals(GroundMarkerConfig.GROUND_MARKER_CONFIG_GROUP)
+			&& (event.getKey().equals(GroundMarkerConfig.SHOW_IMPORT_EXPORT_KEY_NAME)
+				|| event.getKey().equals(GroundMarkerConfig.SHOW_CLEAR_KEY_NAME)))
+		{
+			// Maintain consistent menu option order by removing everything then adding according to config
+			sharingManager.removeMenuOptions();
+
+			if (config.showImportExport())
+			{
+				sharingManager.addImportExportMenuOptions();
+			}
+			if (config.showClear())
+			{
+				sharingManager.addClearMenuOption();
+			}
+		}
+	}
+
 	private void markTile(LocalPoint localPoint)
 	{
 		if (localPoint == null)
@@ -313,20 +343,21 @@ public class GroundMarkerPlugin extends Plugin
 		WorldPoint worldPoint = WorldPoint.fromLocalInstance(client, localPoint);
 		final int regionId = worldPoint.getRegionID();
 
+		GroundMarkerPoint searchPoint = new GroundMarkerPoint(regionId, worldPoint.getRegionX(), worldPoint.getRegionY(), client.getPlane(), null, null);
+		Collection<GroundMarkerPoint> points = getPoints(regionId);
+		GroundMarkerPoint existing = points.stream()
+			.filter(p -> p.equals(searchPoint))
+			.findFirst().orElse(null);
+		if (existing == null)
+		{
+			return;
+		}
+
 		chatboxPanelManager.openTextInput("Tile label")
+			.value(Optional.ofNullable(existing.getLabel()).orElse(""))
 			.onDone((input) ->
 			{
 				input = Strings.emptyToNull(input);
-
-				GroundMarkerPoint searchPoint = new GroundMarkerPoint(regionId, worldPoint.getRegionX(), worldPoint.getRegionY(), client.getPlane(), null, null);
-				Collection<GroundMarkerPoint> points = getPoints(regionId);
-				GroundMarkerPoint existing = points.stream()
-					.filter(p -> p.equals(searchPoint))
-					.findFirst().orElse(null);
-				if (existing == null)
-				{
-					return;
-				}
 
 				GroundMarkerPoint newPoint = new GroundMarkerPoint(regionId, worldPoint.getRegionX(), worldPoint.getRegionY(), client.getPlane(), existing.getColor(), input);
 				points.remove(searchPoint);

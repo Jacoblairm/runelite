@@ -97,9 +97,11 @@ public final class AnimationID
 	public static final int CRAFTING_SPINNING = 894;
 	public static final int CRAFTING_POTTERS_WHEEL = 883;
 	public static final int CRAFTING_POTTERY_OVEN = 24975;
+	public static final int CRAFTING_LOOM = 2270;
 	public static final int SMITHING_SMELTING = 899;
 	public static final int SMITHING_CANNONBALL = 827; //cball smithing uses this and SMITHING_SMELTING
 	public static final int SMITHING_ANVIL = 898;
+	public static final int SMITHING_IMCANDO_HAMMER = 8911;
 	public static final int FISHING_BIG_NET = 620;
 	public static final int FISHING_NET = 621;
 	public static final int FISHING_POLE_CAST = 623; // pole is in the water
@@ -204,10 +206,17 @@ public final class AnimationID
 	public static final int LEAGUE_HOME_TELEPORT_6 = 8807;
 
 	public static final int CONSTRUCTION = 3676;
+	public static final int CONSTRUCTION_IMCANDO = 8192;
 	public static final int SAND_COLLECTION = 895;
 	public static final int PISCARILIUS_CRANE_REPAIR = 7199;
 	public static final int HOME_MAKE_TABLET = 4067;
 	public static final int DRAGONFIRE_SHIELD_SPECIAL = 6696;
+
+	// Ectofuntus animations
+	public static final int ECTOFUNTUS_FILL_SLIME_BUCKET = 4471;
+	public static final int ECTOFUNTUS_GRIND_BONES = 1648;
+	public static final int ECTOFUNTUS_INSERT_BONES = 1649;
+	public static final int ECTOFUNTUS_EMPTY_BIN = 1650;
 
 	// NPC animations
 	public static final int TZTOK_JAD_MAGIC_ATTACK = 2656;

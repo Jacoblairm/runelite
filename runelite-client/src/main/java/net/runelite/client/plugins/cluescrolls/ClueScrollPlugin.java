@@ -217,6 +217,10 @@ public class ClueScrollPlugin extends Plugin
 
 	private final TextComponent textComponent = new TextComponent();
 
+	@Getter
+	private EmoteClue activeSTASHClue;
+	private EmoteClue clickedSTASHClue;
+
 	@Provides
 	ClueScrollConfig getConfig(ConfigManager configManager)
 	{
@@ -264,9 +268,11 @@ public class ClueScrollPlugin extends Plugin
 			return;
 		}
 
+		String message = event.getMessage();
+
 		if (clue instanceof HotColdClue)
 		{
-			if (((HotColdClue) clue).update(event.getMessage(), this))
+			if (((HotColdClue) clue).update(message, this))
 			{
 				worldMapPointsSet = false;
 			}
@@ -274,7 +280,7 @@ public class ClueScrollPlugin extends Plugin
 
 		if (clue instanceof SkillChallengeClue)
 		{
-			String text = Text.removeTags(event.getMessage());
+			String text = Text.removeTags(message);
 			if (text.equals("Skill challenge completed.") ||
 				text.equals("You have completed your master level challenge!") ||
 				text.startsWith("You have completed Charlie's task,") ||
@@ -282,6 +288,19 @@ public class ClueScrollPlugin extends Plugin
 			{
 				((SkillChallengeClue) clue).setChallengeCompleted(true);
 			}
+		}
+
+		if (message.endsWith(" the STASH unit."))
+		{
+			if (clue instanceof EmoteClue && clickedSTASHClue != null && message.equals("You withdraw your items from the STASH unit."))
+			{
+				activeSTASHClue = clickedSTASHClue;
+			}
+			else if (message.equals("You deposit your items into the STASH unit."))
+			{
+				activeSTASHClue = null;
+			}
+			clickedSTASHClue = null;
 		}
 	}
 
@@ -300,7 +319,11 @@ public class ClueScrollPlugin extends Plugin
 	@Subscribe
 	public void onMenuOptionClicked(final MenuOptionClicked event)
 	{
-		if (event.getMenuOption() != null && event.getMenuOption().equals("Read"))
+		if (event.getMenuOption() == null)
+		{
+			return;
+		}
+		if (event.getMenuOption().equals("Read"))
 		{
 			final ItemComposition itemComposition = itemManager.getItemComposition(event.getId());
 
@@ -308,6 +331,14 @@ public class ClueScrollPlugin extends Plugin
 			{
 				clueItemId = itemComposition.getId();
 				updateClue(MapClue.forItemId(clueItemId));
+			}
+		}
+		else if (event.getMenuOption().equals("Search")	&& clue instanceof EmoteClue)
+		{
+			EmoteClue emoteClue = (EmoteClue) clue;
+			if (emoteClue.getStashUnit() != null && emoteClue.getStashUnit().getObjectId() == event.getId())
+			{
+				clickedSTASHClue = emoteClue;
 			}
 		}
 	}
@@ -495,6 +526,10 @@ public class ClueScrollPlugin extends Plugin
 		{
 			resetClue(true);
 		}
+		else if (state == GameState.HOPPING)
+		{
+			namedObjectCheckThisTick = true;
+		}
 	}
 
 	@Subscribe
@@ -561,6 +596,7 @@ public class ClueScrollPlugin extends Plugin
 		}
 
 		// Load the current plane's tiles if a tick has elapsed since the player has changed planes
+		// or upon reaching a logged in state after hopping worlds
 		if (namedObjectCheckThisTick)
 		{
 			namedObjectCheckThisTick = false;
@@ -580,7 +616,7 @@ public class ClueScrollPlugin extends Plugin
 		if (chatDialogClueItem != null
 			&& (chatDialogClueItem.getItemId() == ItemID.CLUE_SCROLL_BEGINNER || chatDialogClueItem.getItemId() == ItemID.CLUE_SCROLL_MASTER))
 		{
-			resetClue(true);
+			resetClue(false);
 		}
 
 		final Widget clueScrollText = client.getWidget(WidgetInfo.CLUE_SCROLL_TEXT);
@@ -1150,6 +1186,18 @@ public class ClueScrollPlugin extends Plugin
 			MapClue mapClue = (MapClue) c;
 
 			return mapClue.getObjectId() == -1 && itemId == ItemID.SPADE;
+		}
+		else if (c instanceof SkillChallengeClue)
+		{
+			SkillChallengeClue challengeClue = (SkillChallengeClue) c;
+
+			for (ItemRequirement ir : challengeClue.getItemRequirements())
+			{
+				if (ir.fulfilledBy(itemId))
+				{
+					return true;
+				}
+			}
 		}
 
 		return false;

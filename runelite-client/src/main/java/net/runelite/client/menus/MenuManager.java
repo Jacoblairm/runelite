@@ -24,7 +24,6 @@
  */
 package net.runelite.client.menus;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
@@ -42,7 +41,6 @@ import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.PlayerMenuOptionsChanged;
 import net.runelite.api.events.WidgetMenuOptionClicked;
-import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 
@@ -65,11 +63,11 @@ public class MenuManager
 	private final Multimap<Integer, WidgetMenuOption> managedMenuOptions = LinkedHashMultimap.create();
 
 	@Inject
-	@VisibleForTesting
-	MenuManager(Client client, EventBus eventBus)
+	private MenuManager(Client client, EventBus eventBus)
 	{
 		this.client = client;
 		this.eventBus = eventBus;
+		eventBus.register(this);
 	}
 
 	/**
@@ -79,8 +77,7 @@ public class MenuManager
 	 */
 	public void addManagedCustomMenu(WidgetMenuOption customMenuOption)
 	{
-		WidgetInfo widget = customMenuOption.getWidget();
-		managedMenuOptions.put(widget.getId(), customMenuOption);
+		managedMenuOptions.put(customMenuOption.getWidgetId(), customMenuOption);
 	}
 
 	/**
@@ -90,13 +87,12 @@ public class MenuManager
 	 */
 	public void removeManagedCustomMenu(WidgetMenuOption customMenuOption)
 	{
-		WidgetInfo widget = customMenuOption.getWidget();
-		managedMenuOptions.remove(widget.getId(), customMenuOption);
+		managedMenuOptions.remove(customMenuOption.getWidgetId(), customMenuOption);
 	}
 
-	private boolean menuContainsCustomMenu(WidgetMenuOption customMenuOption)
+	private static boolean menuContainsCustomMenu(MenuEntry[] menuEntries, WidgetMenuOption customMenuOption)
 	{
-		for (MenuEntry menuEntry : client.getMenuEntries())
+		for (MenuEntry menuEntry : menuEntries)
 		{
 			String option = menuEntry.getOption();
 			String target = menuEntry.getTarget();
@@ -119,23 +115,36 @@ public class MenuManager
 
 		int widgetId = event.getActionParam1();
 		Collection<WidgetMenuOption> options = managedMenuOptions.get(widgetId);
+		if (options.isEmpty())
+		{
+			return;
+		}
 
+		MenuEntry[] menuEntries = client.getMenuEntries();
+
+		MenuEntry[] newMenuEntries = Arrays.copyOf(menuEntries, menuEntries.length + options.size());
+		// Menu entries are sorted with higher-index entries appearing toward the top of the minimenu, so insert older
+		// managed menu entries at higher indices and work backward for newer entries so newly-added entries appear at
+		// the bottom
+		int insertIdx = newMenuEntries.length - 1;
 		for (WidgetMenuOption currentMenu : options)
 		{
-			if (!menuContainsCustomMenu(currentMenu))//Don't add if we have already added it to this widget
+			// Exit if we've inserted the managed menu entries already
+			if (menuContainsCustomMenu(menuEntries, currentMenu))
 			{
-				MenuEntry[] menuEntries = client.getMenuEntries();
-				menuEntries = Arrays.copyOf(menuEntries, menuEntries.length + 1);
-
-				MenuEntry menuEntry = menuEntries[menuEntries.length - 1] = new MenuEntry();
-				menuEntry.setOption(currentMenu.getMenuOption());
-				menuEntry.setParam1(widgetId);
-				menuEntry.setTarget(currentMenu.getMenuTarget());
-				menuEntry.setType(MenuAction.RUNELITE.getId());
-
-				client.setMenuEntries(menuEntries);
+				return;
 			}
+
+			MenuEntry menuEntry = new MenuEntry();
+			menuEntry.setOption(currentMenu.getMenuOption());
+			menuEntry.setParam1(widgetId);
+			menuEntry.setTarget(currentMenu.getMenuTarget());
+			menuEntry.setType(MenuAction.RUNELITE.getId());
+
+			newMenuEntries[insertIdx--] = menuEntry;
 		}
+
+		client.setMenuEntries(newMenuEntries);
 	}
 
 	public void addPlayerMenuItem(String menuText)
@@ -209,6 +218,7 @@ public class MenuManager
 				customMenu.setMenuOption(event.getMenuOption());
 				customMenu.setMenuTarget(event.getMenuTarget());
 				customMenu.setWidget(curMenuOption.getWidget());
+				customMenu.setWidgetId(curMenuOption.getWidgetId());
 				eventBus.post(customMenu);
 				return;
 			}

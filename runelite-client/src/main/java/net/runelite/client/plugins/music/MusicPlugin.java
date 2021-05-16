@@ -557,11 +557,16 @@ public class MusicPlugin extends Plugin
 				return;
 			}
 
-			for (Widget w : track.getChildren())
+			Widget[] trackChildren = track.getChildren();
+
+			if (trackChildren != null)
 			{
-				if (w != null)
+				for (Widget w : trackChildren)
 				{
-					w.setAction(0, null);
+					if (w != null)
+					{
+						w.setAction(0, null);
+					}
 				}
 			}
 
@@ -588,9 +593,16 @@ public class MusicPlugin extends Plugin
 		public void shutDown()
 		{
 			super.shutDown();
-			handle.setSpriteId(SpriteID.SETTINGS_SLIDER_HANDLE_BLUE);
 
-			this.icon.setOnOpListener((Object[]) null);
+			if (this.handle != null)
+			{
+				handle.setSpriteId(SpriteID.SETTINGS_SLIDER_HANDLE_BLUE);
+			}
+
+			if (this.icon != null)
+			{
+				this.icon.setOnOpListener((Object[]) null);
+			}
 
 			Widget root = client.getWidget(this.root);
 			if (root != null)
@@ -705,7 +717,7 @@ public class MusicPlugin extends Plugin
 				return;
 			}
 
-			int arg = client.getIntStackSize() - 7;
+			int arg = client.getIntStackSize() - 8;
 			int[] is = client.getIntStack();
 			Channel channel;
 			switch (is[arg])

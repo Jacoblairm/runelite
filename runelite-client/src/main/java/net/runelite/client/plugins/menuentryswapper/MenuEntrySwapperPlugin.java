@@ -131,6 +131,13 @@ public class MenuEntrySwapperPlugin extends Plugin
 		"brimstail"
 	);
 
+	private static final Set<String> TEMPOROSS_NPCS = ImmutableSet.of(
+		"captain dudi",
+		"captain pudi",
+		"first mate deri",
+		"first mate peri"
+	);
+
 	@Inject
 	private Client client;
 
@@ -222,6 +229,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("talk-to", ESSENCE_MINE_NPCS::contains, "teleport", config::swapEssenceMineTeleport);
 		swap("talk-to", "collect", config::swapCollectMiscellania);
 		swap("talk-to", "deposit-items", config::swapDepositItems);
+		swap("talk-to", TEMPOROSS_NPCS::contains, "leave", config::swapTemporossLeave);
 
 		swap("leave tomb", "quick-leave", config::swapQuickLeave);
 		swap("tomb door", "quick-leave", config::swapQuickLeave);
@@ -237,6 +245,10 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("cage", "harpoon", config::swapHarpoon);
 		swap("big net", "harpoon", config::swapHarpoon);
 		swap("net", "harpoon", config::swapHarpoon);
+
+		swap("lure", "bait", config::swapBait);
+		swap("net", "bait", config::swapBait);
+		swap("small net", "bait", config::swapBait);
 
 		swap("enter", "portal", "home", () -> config.swapHomePortal() == HouseMode.HOME);
 		swap("enter", "portal", "build mode", () -> config.swapHomePortal() == HouseMode.BUILD_MODE);
@@ -304,6 +316,14 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swap("teleport menu", "draynor village", config::swapJewelleryBox);
 		swap("teleport menu", "al kharid", config::swapJewelleryBox);
 
+		Arrays.asList(
+			"annakarl", "ape atoll dungeon", "ardougne", "barrows", "battlefront", "camelot", "carrallangar",
+			"catherby", "cemetery", "draynor manor", "falador", "fenkenstrain's castle", "fishing guild", "ghorrock",
+			"grand exchange", "great kourend", "harmony island", "kharyrll", "lumbridge", "arceuus library",
+			"lunar isle", "marim", "mind altar", "salve graveyard", "seers' village", "senntisten", "troll stronghold",
+			"varrock", "watchtower", "waterbirth island", "weiss", "west ardougne", "yanille"
+		).forEach(location -> swap(location, "portal nexus", "teleport menu", config::swapPortalNexus));
+
 		swap("shared", "private", config::swapPrivate);
 
 		swap("pick", "pick-lots", config::swapPick);
@@ -334,6 +354,8 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 		swap("bury", "use", config::swapBones);
 
+		swap("wield", "battlestaff", "use", config::swapBattlestaves);
+
 		swap("clean", "use", config::swapHerbs);
 
 		swap("read", "recite-prayer", config::swapPrayerBook);
@@ -359,6 +381,8 @@ public class MenuEntrySwapperPlugin extends Plugin
 		swapTeleport("teleport to house", "outside");
 
 		swap("eat", "guzzle", config::swapRockCake);
+
+		swap("travel", "dive", config::swapRowboatDive);
 	}
 
 	private void swap(String option, String swappedOption, Supplier<Boolean> enabled)

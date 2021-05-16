@@ -114,6 +114,18 @@ public interface FishingConfig extends Config
 		return Color.GREEN;
 	}
 
+	@Alpha
+	@ConfigItem(
+		keyName = "harpoonfishOverlayColor",
+		name = "Harpoonfish Overlay",
+		description = "Color of overlays for bubbling Harpoonfish spots",
+		position = 6
+	)
+	default Color getHarpoonfishOverlayColor()
+	{
+		return Color.GREEN;
+	}
+
 	@ConfigItem(
 		position = 7,
 		keyName = "statTimeout",
@@ -150,11 +162,11 @@ public interface FishingConfig extends Config
 
 	@ConfigItem(
 		position = 10,
-		keyName = "trawlerNotification",
-		name = "Trawler activity notification",
-		description = "Send a notification when fishing trawler activity drops below 15%."
+		keyName = "flyingFishNotification",
+		name = "Flying fish notification",
+		description = "Send a notification when a flying fish spawns on your fishing spot."
 	)
-	default boolean trawlerNotification()
+	default boolean flyingFishNotification()
 	{
 		return true;
 	}
@@ -162,10 +174,21 @@ public interface FishingConfig extends Config
 	@ConfigItem(
 		position = 11,
 		keyName = "trawlerTimer",
-		name = "Trawler timer in MM:SS",
-		description = "Trawler Timer will display a more accurate timer in MM:SS format."
+		name = "Trawler timer in M:SS",
+		description = "Trawler timer will display a more accurate timer in M:SS format."
 	)
 	default boolean trawlerTimer()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		position = 12,
+		keyName = "trawlerContribution",
+		name = "Trawler contribution",
+		description = "Display the exact number of trawler contribution points gained."
+	)
+	default boolean trawlerContribution()
 	{
 		return true;
 	}
