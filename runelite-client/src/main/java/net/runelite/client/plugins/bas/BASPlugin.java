@@ -118,7 +118,7 @@ public class BASPlugin extends Plugin implements KeyListener
 
 	private static final String updateFile = "updateFile.php";
 
-	private static final int clanSetupWidgetID = 24;
+	private static final int clanSetupWidgetID = 20;
 	private static final ImmutableList<String> BAS_OPTIONS = ImmutableList.of(MARK_DONE, MARK_INPROGRESS, MARK_NOTINPROGRESS, MARK_START_COOLDOWN, GET_CUSTOMER_ID);
 	private static final ImmutableList<String> BAS_BUY_OPTIONS = ImmutableList.of(BUY_1R_PREM,BUY_1R_REG,BUY_HAT_PREM,BUY_HAT_REG,BUY_QK_PREM,BUY_QK_REG,BUY_LVL5_PREM
 			,BUY_LVL5_REG,BUY_TORSO_PREM,BUY_TORSO_REG);
