@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2016-2019, Adam <Adam@sigterm.info>
+ * Copyright (c) 2016-2018, Adam <Adam@sigterm.info>
+ * Copyright (c) 2021, Tanlines <tanlines@outlook.com.au>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,43 +23,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.rs;
+package net.runelite.client.plugins.itemstats.potions;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import okhttp3.OkHttpClient;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import static org.junit.Assert.assertEquals;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import net.runelite.api.Client;
+import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.InventoryID;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.ItemID;
+import net.runelite.client.plugins.itemstats.StatBoost;
+import static net.runelite.client.plugins.itemstats.stats.Stats.RUN_ENERGY;
 
-public class ClientConfigLoaderTest
+public class StaminaPotion extends StatBoost
 {
-	@Rule
-	public final MockWebServer server = new MockWebServer();
-
-	@Before
-	public void before() throws IOException
+	public StaminaPotion()
 	{
-		String response;
-		try (InputStream in = getClass().getResourceAsStream("jav_config.ws"))
+		super(RUN_ENERGY, false);
+	}
+
+	@Override
+	public int heals(Client client)
+	{
+		ItemContainer equipContainer = client.getItemContainer(InventoryID.EQUIPMENT);
+		if (equipContainer != null)
 		{
-			response = CharStreams.toString(new InputStreamReader(
-				in, Charsets.UTF_8));
+			Item ring = equipContainer.getItem(EquipmentInventorySlot.RING.getSlotIdx());
+			if (ring != null && ring.getId() == ItemID.RING_OF_ENDURANCE)
+			{
+				return 40;
+			}
 		}
-		server.enqueue(new MockResponse().setBody(response));
+		return 20;
 	}
-
-	@Test
-	public void testFetch() throws IOException
-	{
-		final RSConfig config = new ClientConfigLoader(new OkHttpClient()).fetch(server.url("/"));
-		assertEquals("http://oldschool1.runescape.com/", config.getCodeBase());
-	}
-
 }
