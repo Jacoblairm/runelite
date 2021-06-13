@@ -66,7 +66,7 @@ import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.game.FriendChatManager;
+import net.runelite.client.game.ChatIconManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -140,7 +140,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	private ConfigManager configManager;
 
 	@Inject
-	private FriendChatManager clanManager;
+	private ChatIconManager clanManager;
 
 	@Inject
 	private ChatMessageManager chatMessageManager;
@@ -894,6 +894,18 @@ public class BASPlugin extends Plugin implements KeyListener
 		});
 	}
 
+	private FriendsChatRank getRank(String playerName)
+	{
+		final FriendsChatManager friendsChatManager = client.getFriendsChatManager();
+		if (friendsChatManager == null)
+		{
+			return FriendsChatRank.UNRANKED;
+		}
+
+		FriendsChatMember friendsChatMember = friendsChatManager.findByName(playerName);
+		return friendsChatMember != null ? friendsChatMember.getRank() : FriendsChatRank.UNRANKED;
+	}
+
 	@Subscribe
 	public void onChatMessage(ChatMessage chatMessage)
 	{
@@ -902,7 +914,7 @@ public class BASPlugin extends Plugin implements KeyListener
 			return;
 		}
 
-		final FriendsChatRank rank = clanManager.getRank(chatMessage.getName());
+		final FriendsChatRank rank = getRank(chatMessage.getName());
 
 		OkHttpClient httpClient = RuneLiteAPI.CLIENT;
 		HttpUrl httpUrl = new HttpUrl.Builder()
