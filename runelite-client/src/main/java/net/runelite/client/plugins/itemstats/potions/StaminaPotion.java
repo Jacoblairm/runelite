@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 2019, Tomas Slusny <slusnucky@gmail.com>
- * Copyright (c) 2019, Aleios <https://github.com/aleios>
- * Copyright (c) 2020, Unmoon <https://github.com/unmoon>
+ * Copyright (c) 2016-2018, Adam <Adam@sigterm.info>
+ * Copyright (c) 2021, Tanlines <tanlines@outlook.com.au>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,32 +23,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.itemcharges;
+package net.runelite.client.plugins.itemstats.potions;
 
-import com.google.common.collect.Sets;
-import java.util.Set;
-import lombok.Getter;
+import net.runelite.api.Client;
 import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.InventoryID;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.ItemID;
+import net.runelite.client.plugins.itemstats.StatBoost;
+import static net.runelite.client.plugins.itemstats.stats.Stats.RUN_ENERGY;
 
-@Getter
-enum ItemWithSlot
+public class StaminaPotion extends StatBoost
 {
-	ABYSSAL_BRACELET(ItemChargeType.ABYSSAL_BRACELET, EquipmentInventorySlot.GLOVES),
-	AMULET_OF_CHEMISTY(ItemChargeType.AMULET_OF_CHEMISTRY, EquipmentInventorySlot.AMULET),
-	AMULET_OF_BOUNTY(ItemChargeType.AMULET_OF_BOUNTY, EquipmentInventorySlot.AMULET),
-	DODGY_NECKLACE(ItemChargeType.DODGY_NECKLACE, EquipmentInventorySlot.AMULET),
-	BINDING_NECKLACE(ItemChargeType.BINDING_NECKLACE, EquipmentInventorySlot.AMULET),
-	EXPLORER_RING(ItemChargeType.EXPLORER_RING, EquipmentInventorySlot.RING),
-	RING_OF_FORGING(ItemChargeType.RING_OF_FORGING, EquipmentInventorySlot.RING),
-	CHRONICLE(ItemChargeType.CHRONICLE, EquipmentInventorySlot.SHIELD),
-	TELEPORT(ItemChargeType.TELEPORT, EquipmentInventorySlot.WEAPON, EquipmentInventorySlot.AMULET, EquipmentInventorySlot.GLOVES, EquipmentInventorySlot.RING);
-
-	private final ItemChargeType type;
-	private final Set<EquipmentInventorySlot> slots;
-
-	ItemWithSlot(final ItemChargeType type, final EquipmentInventorySlot... slots)
+	public StaminaPotion()
 	{
-		this.type = type;
-		this.slots = Sets.newHashSet(slots);
+		super(RUN_ENERGY, false);
+	}
+
+	@Override
+	public int heals(Client client)
+	{
+		ItemContainer equipContainer = client.getItemContainer(InventoryID.EQUIPMENT);
+		if (equipContainer != null)
+		{
+			Item ring = equipContainer.getItem(EquipmentInventorySlot.RING.getSlotIdx());
+			if (ring != null && ring.getId() == ItemID.RING_OF_ENDURANCE)
+			{
+				return 40;
+			}
+		}
+		return 20;
 	}
 }

@@ -66,7 +66,7 @@ import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.game.FriendChatManager;
+import net.runelite.client.game.ChatIconManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -118,7 +118,7 @@ public class BASPlugin extends Plugin implements KeyListener
 
 	private static final String updateFile = "updateFile.php";
 
-	private static final int clanSetupWidgetID = 24;
+	private static final int clanSetupWidgetID = 20;
 	private static final ImmutableList<String> BAS_OPTIONS = ImmutableList.of(MARK_DONE, MARK_INPROGRESS, MARK_NOTINPROGRESS, MARK_START_COOLDOWN, GET_CUSTOMER_ID);
 	private static final ImmutableList<String> BAS_BUY_OPTIONS = ImmutableList.of(BUY_1R_PREM,BUY_1R_REG,BUY_HAT_PREM,BUY_HAT_REG,BUY_QK_PREM,BUY_QK_REG,BUY_LVL5_PREM
 			,BUY_LVL5_REG,BUY_TORSO_PREM,BUY_TORSO_REG);
@@ -140,7 +140,7 @@ public class BASPlugin extends Plugin implements KeyListener
 	private ConfigManager configManager;
 
 	@Inject
-	private FriendChatManager clanManager;
+	private ChatIconManager clanManager;
 
 	@Inject
 	private ChatMessageManager chatMessageManager;
@@ -652,7 +652,8 @@ public class BASPlugin extends Plugin implements KeyListener
 		{
 			Widget clanChatList = client.getWidget(WidgetInfo.FRIENDS_CHAT_LIST);
 			Widget owner = client.getWidget(WidgetInfo.FRIENDS_CHAT_OWNER);
-			if (clanMemberManager != null && clanMemberManager.getCount() > 0 && owner.getText().equals("<col=ffffff>Ba Services</col>"))
+
+			if (clanMemberManager != null && clanMemberManager.getCount() > 0 && owner.getText().equals("<col=ffb83f>Ba Services</col>"))
 			{
 				membersWidgets = clanChatList.getDynamicChildren();
 				for (Widget member : membersWidgets)
@@ -893,6 +894,18 @@ public class BASPlugin extends Plugin implements KeyListener
 		});
 	}
 
+	private FriendsChatRank getRank(String playerName)
+	{
+		final FriendsChatManager friendsChatManager = client.getFriendsChatManager();
+		if (friendsChatManager == null)
+		{
+			return FriendsChatRank.UNRANKED;
+		}
+
+		FriendsChatMember friendsChatMember = friendsChatManager.findByName(playerName);
+		return friendsChatMember != null ? friendsChatMember.getRank() : FriendsChatRank.UNRANKED;
+	}
+
 	@Subscribe
 	public void onChatMessage(ChatMessage chatMessage)
 	{
@@ -901,7 +914,7 @@ public class BASPlugin extends Plugin implements KeyListener
 			return;
 		}
 
-		final FriendsChatRank rank = clanManager.getRank(chatMessage.getName());
+		final FriendsChatRank rank = getRank(chatMessage.getName());
 
 		OkHttpClient httpClient = RuneLiteAPI.CLIENT;
 		HttpUrl httpUrl = new HttpUrl.Builder()
