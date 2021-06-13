@@ -653,7 +653,8 @@ public class BASPlugin extends Plugin implements KeyListener
 		{
 			Widget clanChatList = client.getWidget(WidgetInfo.FRIENDS_CHAT_LIST);
 			Widget owner = client.getWidget(WidgetInfo.FRIENDS_CHAT_OWNER);
-			if (clanMemberManager != null && clanMemberManager.getCount() > 0 && owner.getText().equals("<col=ffffff>Ba Services</col>"))
+
+			if (clanMemberManager != null && clanMemberManager.getCount() > 0 && owner.getText().equals("<col=ffb83f>Ba Services</col>"))
 			{
 				membersWidgets = clanChatList.getDynamicChildren();
 				for (Widget member : membersWidgets)
