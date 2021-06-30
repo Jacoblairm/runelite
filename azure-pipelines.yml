@@ -31,6 +31,7 @@ steps:
       publishJUnitResults: true
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
       goals: 'install'
+      options: 'package -Dmaven.test.skip'
 
   - task: CopyFiles@2
     inputs:
