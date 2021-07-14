@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, Adam <Adam@sigterm.info>
+ * Copyright (c) 2021, Hydrox6 <ikada@protonmail.ch>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,44 +22,54 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.api;
+package net.runelite.client.plugins.roofremoval;
 
-/**
- * Represents the entire 3D scene
- */
-public interface Scene
+import net.runelite.client.config.Config;
+import net.runelite.client.config.ConfigGroup;
+import net.runelite.client.config.ConfigItem;
+
+@ConfigGroup(RoofRemovalConfig.CONFIG_GROUP)
+public interface RoofRemovalConfig extends Config
 {
-	/**
-	 * Gets the tiles in the scene
-	 *
-	 * @return the tiles in [plane][x][y]
-	 */
-	Tile[][][] getTiles();
+	String CONFIG_GROUP = "roofremoval";
 
-	int getDrawDistance();
-	void setDrawDistance(int drawDistance);
+	@ConfigItem(
+		keyName = "removePosition",
+		name = "Player's position",
+		description = "Remove roofs above the player's position"
+	)
+	default boolean removePosition()
+	{
+		return true;
+	}
 
-	/**
-	 * Get the minimum scene level which will be rendered
-	 *
-	 * @return the plane of the minimum level
-	 */
-	int getMinLevel();
+	@ConfigItem(
+		keyName = "removeHovered",
+		name = "Hovered tile",
+		description = "Remove roofs above the hovered tile"
+	)
+	default boolean removeHovered()
+	{
+		return true;
+	}
 
-	/**
-	 * Set the minimum scene level which will be rendered
-	 *
-	 * @param minLevel the plane of the minimum level
-	 */
-	void setMinLevel(int minLevel);
+	@ConfigItem(
+		keyName = "removeDestination",
+		name = "Destination tile",
+		description = "Remove roofs above the destination tile"
+	)
+	default boolean removeDestination()
+	{
+		return true;
+	}
 
-	/**
-	 * Remove a game object from the scene
-	 * @param gameObject
-	 */
-	void removeGameObject(GameObject gameObject);
-
-	void generateHouses();
-
-	void setRoofRemovalMode(int flags);
+	@ConfigItem(
+		keyName = "removeBetween",
+		name = "Between camera & player",
+		description = "Remove roofs between the camera and the player at low camera angles"
+	)
+	default boolean removeBetween()
+	{
+		return true;
+	}
 }
